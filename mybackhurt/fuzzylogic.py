@@ -132,8 +132,7 @@ def calculate_diet_score(p, c, f, cal, user_diet_mode, config):
     return 0.2
 def normalize_category(raw_cat):
     raw_cat = str(raw_cat).lower().strip()
-    
-    # Bản đồ quy đổi
+
     mapping = {
         'full_meal': ['rice', 'pho', 'bun_bo', 'hotpot', 'noodle', 'sashimi', 'sushi', 'bread', 'pasta', 'nuong'],
         'snack': ['snack', 'fried_food', 'cake', 'dimsum', 'skewer'],
@@ -142,12 +141,25 @@ def normalize_category(raw_cat):
         'healthy_meal': ['salad', 'healthy', 'wrap', 'poke', 'soup'],
         'fast_food': ['fast_food', 'burger', 'pizza', 'fried_chicken']
     }
-    
+
     for main_cat, sub_cats in mapping.items():
         if raw_cat == main_cat or raw_cat in sub_cats:
             return main_cat
-            
+
     return 'full_meal'
+
+def get_meal_type(food_category):
+    """Map internal category to user-facing meal type: Snack / Fast food / Full meal / Healthy meal"""
+    cat = normalize_category(food_category)
+    meal_type_map = {
+        'snack': 'Snack',
+        'drink': 'Snack',
+        'dessert': 'Snack',
+        'fast_food': 'Fast food',
+        'full_meal': 'Full meal',
+        'healthy_meal': 'Healthy meal'
+    }
+    return meal_type_map.get(cat, 'Full meal')
 def calculate_weather_score(food_category, current_weather, config):
     normalized_cat = normalize_category(food_category)
     weather_map = config.get('weather_food_map', {})
@@ -262,12 +274,15 @@ def get_recommendations(user_inputs, config, dishes_df, restaurants_df):
                       
         final_score = ((base_match_score * 0.85) + (q_score * 0.15)) * cu_score
         
+        meal_type = get_meal_type(dish['food_category'])
+
         results.append({
             'dish_id': dish['dish_id'],
             'dish_name': dish['name'],
             'restaurant_id': res_id,
             'restaurant_name': res_info.get('name', 'Unknown'),
             'price': dish['price'],
+            'meal_type': meal_type,
             'match_score': round(final_score * 100, 2)
         })
     results.sort(key=lambda x: x['match_score'], reverse=True)
