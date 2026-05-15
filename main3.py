@@ -46,6 +46,57 @@ def split_html(html_str):
     body  = body_match.group(1) if body_match else ''
     return style.strip(), body.strip()
 
+
+APP_FONT_CSS = """
+@font-face {
+  font-family: 'Pacifico';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/pacifico/v23/FwZY7-Qmy14u9lezJ-6I6MmBp0u-zK4.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Pacifico';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/pacifico/v23/FwZY7-Qmy14u9lezJ-6H6MmBp0u-.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Work Sans';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/worksans/v24/QGYsz_wNahGAdqQ43Rh_c6DptfpA4cD3.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Work Sans';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/worksans/v24/QGYsz_wNahGAdqQ43Rh_fKDptfpA4Q.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+:root {
+  --foodmind-font: 'Work Sans', 'Be Vietnam Pro', 'Sora', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+body,
+button,
+input,
+textarea,
+select,
+body *:not(svg):not(path):not(polyline):not(circle):not(line):not(rect):not(polygon) {
+  font-family: var(--foodmind-font) !important;
+}
+"""
+
+
+def apply_app_font(html_str):
+    return html_str.replace('</style>', APP_FONT_CSS + '\n</style>', 1)
+
 # --- Đọc HTML từ các file gốc ---
 html_splash   = extract_html(BASE_DIR / "foodmind_app.py")
 html_login    = extract_html(BASE_DIR / "foodmind_app1.py")
@@ -905,6 +956,7 @@ html_results   = remove_home_top_action_icons(html_results)
 html_results   = sync_result_tab_indicator(html_results)
 html_results   = add_needs_panel_toggle(html_results)
 html_results   = add_map_screen_to_results(html_results, style_map, body_map)
+html_results   = apply_app_font(html_results)
 
 # --- Chèn nội dung vào placeholder ---
 combined_html = combined_html.replace('STYLE_SPLASH_PLACEHOLDER', style_splash)
@@ -926,6 +978,7 @@ combined_html = combined_html.replace('BODY_DIET_PLACEHOLDER', body_diet)
 combined_html = combined_html.replace('BODY_APP7_PLACEHOLDER', body_app7)
 combined_html = combined_html.replace('RESULT_HTML_PLACEHOLDER', html.escape(html_results, quote=False))
 combined_html = combined_html.replace('TRANSITION_JS_PLACEHOLDER', transition_js)
+combined_html = apply_app_font(combined_html)
 
 # --- Render ---
 components.html(combined_html, height=960, scrolling=False)
