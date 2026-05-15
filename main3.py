@@ -397,10 +397,8 @@ transition_js = """
     window.switchToHomeFromResults = function() {
         var onboardingView = document.getElementById('onboarding-view');
         var resultsView = document.getElementById('results-view');
-        var resultFrame = document.getElementById('main2-frame');
 
         if (resultsView) resultsView.style.display = 'none';
-        if (resultFrame) resultFrame.srcdoc = '';
         if (onboardingView) onboardingView.style.display = 'flex';
 
         [splashScreen, loginScreen, registerScreen, homeScreen, budgetScreen, hungerScreen, dietScreen, app7Screen].forEach(function(screen) {
@@ -703,6 +701,12 @@ def sync_result_tab_indicator(results_html):
         button.classList.toggle('inactive', index !== activeIndex);
       });
     });
+
+    if (targetId === 'screen-result1') {
+      document.querySelectorAll('#screen-result1 .needs-filter-fab').forEach(fab => {
+        fab.classList.remove('is-visible');
+      });
+    }
   }
 """
     results_html = results_html.replace(
@@ -713,6 +717,144 @@ def sync_result_tab_indicator(results_html):
     results_html = results_html.replace(
         "    if (!newScreen || currentScreenId === targetId) return;\n\n    isAnimating = false;",
         "    if (!newScreen || currentScreenId === targetId) return;\n\n    syncResultTabIndicator(targetId);\n    isAnimating = false;",
+        1
+    )
+    return results_html
+
+
+def add_needs_panel_toggle(results_html):
+    """Thêm animation ẩn/hiện summary panel và floating filter button."""
+    needs_toggle_css = """
+.needs-card.needs-panel-hiding {
+  pointer-events: none;
+  animation: needsPanelHide 0.26s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+.needs-card.needs-panel-restoring {
+  animation: needsPanelShow 0.30s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+@keyframes needsPanelHide {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(24px) scale(0.94); }
+}
+@keyframes needsPanelShow {
+  from { opacity: 0; transform: translateY(24px) scale(0.94); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.needs-filter-fab {
+  position: absolute;
+  right: 24px;
+  bottom: 104px;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: none;
+  background: #1a1a1a;
+  color: #fff;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 45;
+  box-shadow: 0 14px 30px rgba(0,0,0,0.24);
+  transition: transform 0.18s ease, opacity 0.18s ease;
+}
+.needs-filter-fab:active {
+  transform: scale(0.94);
+}
+.needs-filter-fab.is-visible {
+  display: flex;
+  animation: needsFabShow 0.22s ease both;
+}
+#screen-result1 .needs-filter-fab,
+#screen-result1 .needs-filter-fab.is-visible {
+  display: none !important;
+}
+#screen-result1 .needs-card {
+  display: none !important;
+}
+@keyframes needsFabShow {
+  from { opacity: 0; transform: translateY(12px) scale(0.86); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+"""
+    needs_toggle_js = """
+  function getNeedsScreen(el) {
+    return el.closest('#screen-result, #screen-result1, #screen-map, .screen-wrapper') || document.querySelector('.phone-frame');
+  }
+
+  function ensureNeedsFilterFab(screen) {
+    if (screen && screen.id === 'screen-result1') return null;
+
+    let fab = screen.querySelector(':scope > .needs-filter-fab');
+    if (fab) return fab;
+
+    fab = document.createElement('button');
+    fab.type = 'button';
+    fab.className = 'needs-filter-fab';
+    fab.setAttribute('aria-label', 'Mở tóm tắt nhu cầu');
+    fab.innerHTML = `
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="4" y1="6" x2="14" y2="6"></line>
+        <line x1="18" y1="6" x2="20" y2="6"></line>
+        <circle cx="16" cy="6" r="2"></circle>
+        <line x1="4" y1="12" x2="8" y2="12"></line>
+        <line x1="12" y1="12" x2="20" y2="12"></line>
+        <circle cx="10" cy="12" r="2"></circle>
+        <line x1="4" y1="18" x2="13" y2="18"></line>
+        <line x1="17" y1="18" x2="20" y2="18"></line>
+        <circle cx="15" cy="18" r="2"></circle>
+      </svg>`;
+    screen.appendChild(fab);
+
+    fab.addEventListener('click', event => {
+      event.stopPropagation();
+      const needsCard = screen.querySelector('.needs-card');
+      if (!needsCard) return;
+
+      fab.classList.remove('is-visible');
+      needsCard.style.display = '';
+      needsCard.classList.remove('needs-panel-hiding', 'needs-panel-restoring');
+      needsCard.offsetHeight;
+      needsCard.classList.add('needs-panel-restoring');
+      setTimeout(() => needsCard.classList.remove('needs-panel-restoring'), 320);
+    });
+
+    return fab;
+  }
+
+  function hideNeedsPanel(closeBtn) {
+    const needsCard = closeBtn.closest('.needs-card');
+    if (!needsCard) return;
+
+    const screen = getNeedsScreen(needsCard);
+    const fab = ensureNeedsFilterFab(screen);
+    needsCard.classList.remove('needs-panel-restoring', 'needs-panel-hiding');
+    needsCard.offsetHeight;
+    needsCard.classList.add('needs-panel-hiding');
+
+    setTimeout(() => {
+      needsCard.style.display = 'none';
+      needsCard.classList.remove('needs-panel-hiding');
+      if (fab) fab.classList.add('is-visible');
+    }, 270);
+  }
+"""
+    results_html = results_html.replace('</style>', needs_toggle_css + '\n</style>', 1)
+    results_html = results_html.replace(
+        "  document.addEventListener('click', event => {\n    const editNeedsBtn = event.target.closest('.needs-edit-btn');",
+        needs_toggle_js + "\n  document.addEventListener('click', event => {\n    const editNeedsBtn = event.target.closest('.needs-edit-btn');",
+        1
+    )
+    results_html = results_html.replace(
+        "    const closeNeedsBtn = event.target.closest('.needs-close-btn');\n"
+        "    if (closeNeedsBtn) {\n"
+        "      const needsCard = closeNeedsBtn.closest('.needs-card');\n"
+        "      if (needsCard) needsCard.style.display = 'none';\n"
+        "    }",
+        "    const closeNeedsBtn = event.target.closest('.needs-close-btn');\n"
+        "    if (closeNeedsBtn) {\n"
+        "      hideNeedsPanel(closeNeedsBtn);\n"
+        "    }",
         1
     )
     return results_html
@@ -750,6 +892,7 @@ style_diet     = scope_css(style_diet,     'screen-diet')
 style_app7     = scope_css(style_app7,     'screen-app7')
 html_results   = remove_home_top_action_icons(html_results)
 html_results   = sync_result_tab_indicator(html_results)
+html_results   = add_needs_panel_toggle(html_results)
 html_results   = add_map_screen_to_results(html_results, style_map, body_map)
 
 # --- Chèn nội dung vào placeholder ---
