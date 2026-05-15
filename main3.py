@@ -686,6 +686,10 @@ def remove_home_top_action_icons(results_html):
 #screen-result1 .top-actions {
   display: none !important;
 }
+#screen-discover .search-box,
+#screen-discover .section-header .view-all {
+  display: none !important;
+}
 """
     return results_html.replace('</style>', hide_top_actions_css + '\n</style>', 1)
 
