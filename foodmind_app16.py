@@ -261,6 +261,22 @@ body {
   cursor: pointer;
 }
 .res-card:hover { border-color: #FF5A1F; box-shadow: 0 4px 15px rgba(255, 90, 31, 0.05); }
+.res-card.is-hidden,
+.map-marker.is-hidden {
+  display: none;
+}
+
+.empty-results {
+  display: none;
+  padding: 22px 16px;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+  font-weight: 700;
+}
+.empty-results.is-visible {
+  display: block;
+}
 
 .res-img-box {
   width: 56px; height: 56px;
@@ -373,22 +389,22 @@ body {
     </div>
   </div>
 
-  <div class="map-marker" style="top: 200px; left: 120px;">
+  <div class="map-marker" data-restaurant="Cơm Tấm Bà Lan" style="top: 200px; left: 120px;">
     <div class="match-tag">94%</div>
     <div class="marker-bubble">🍱</div>
   </div>
 
-  <div class="map-marker" style="top: 200px; left: 280px;">
+  <div class="map-marker" data-restaurant="Bún Bò Huế Chu" style="top: 200px; left: 280px;">
     <div class="match-tag">88%</div>
     <div class="marker-bubble">🥣</div>
   </div>
 
-  <div class="map-marker" style="top: 360px; left: 80px;">
+  <div class="map-marker" data-restaurant="Sushi Hokkaido" style="top: 360px; left: 80px;">
     <div class="match-tag">82%</div>
     <div class="marker-bubble">🍣</div>
   </div>
 
-  <div class="map-marker" style="top: 330px; left: 330px;">
+  <div class="map-marker" data-restaurant="Healthy Bowl" style="top: 330px; left: 330px;">
     <div class="match-tag">96%</div>
     <div class="marker-bubble">🥗</div>
   </div>
@@ -408,7 +424,7 @@ body {
 
     <div class="sheet-scroll-area">
       
-      <div class="res-card">
+      <div class="res-card" data-restaurant="Cơm Tấm Bà Lan">
         <div class="res-img-box">🍱</div>
         <div class="res-info">
           <div class="res-name">Cơm Tấm Bà Lan</div>
@@ -424,7 +440,23 @@ body {
         </div>
       </div>
 
-      <div class="res-card">
+      <div class="res-card" data-restaurant="Bún Bò Huế Chu">
+        <div class="res-img-box">🥣</div>
+        <div class="res-info">
+          <div class="res-name">Bún Bò Huế Chu</div>
+          <div class="res-meta">
+            <span class="rating"><span style="color:#FFD600;">★</span> 4.7</span>
+            <span>•</span>
+            <span>Cách đây<br>500m</span>
+          </div>
+        </div>
+        <div class="res-right">
+          <div class="match-badge">88% Match</div>
+          <svg class="chevron-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </div>
+      </div>
+
+      <div class="res-card" data-restaurant="Healthy Bowl">
         <div class="res-img-box">🥗</div>
         <div class="res-info">
           <div class="res-name">Healthy Bowl</div>
@@ -440,7 +472,7 @@ body {
         </div>
       </div>
 
-      <div class="res-card">
+      <div class="res-card" data-restaurant="Sushi Hokkaido">
         <div class="res-img-box">🍣</div>
         <div class="res-info">
           <div class="res-name">Sushi Hokkaido</div>
@@ -455,6 +487,8 @@ body {
           <svg class="chevron-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </div>
       </div>
+
+      <div class="empty-results">Không tìm thấy quán phù hợp</div>
 
     </div>
   </div>

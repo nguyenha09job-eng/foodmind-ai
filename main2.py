@@ -1011,7 +1011,7 @@ html_code = """
             450 kcal
           </div>
         </div>
-        <button class="btn-order">Đặt món</button>
+        <button class="btn-order btn-order-dinner">Đặt món</button>
       </div>
     </div>
 
@@ -1305,6 +1305,28 @@ html_code = """
       tag: 'PHÙ HỢP 78% VỚI NHU CẦU',
       image: "url('https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=600&q=80')"
     },
+    'Healthy Bowl': {
+      name: 'Healthy Bowl',
+      title: 'Healthy<br>Bowl',
+      match: '96%',
+      matchText: '96% match',
+      price: '65k – 90k',
+      distance: '420 m • 8–12 ph',
+      rating: '4.8',
+      tag: 'PHÙ HỢP 96% VỚI NHU CẦU',
+      image: "url('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80')"
+    },
+    'Sushi Hokkaido': {
+      name: 'Sushi Hokkaido',
+      title: 'Sushi<br>Hokkaido',
+      match: '88%',
+      matchText: '88% match',
+      price: '80k – 140k',
+      distance: '600 m • 12–18 ph',
+      rating: '4.7',
+      tag: 'PHÙ HỢP 88% VỚI NHU CẦU',
+      image: "url('https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=600&q=80')"
+    },
     'Gà Rán Jollibee': {
       name: 'Gà Rán Jollibee',
       title: 'Gà Rán<br>Jollibee',
@@ -1319,12 +1341,20 @@ html_code = """
   };
 
   let selectedRestaurantName = 'Cơm Tấm Bà Lan';
+  let detailReturnScreen = 'screen-result';
 
-  function openRestaurantDetail(name) {
+  function getCurrentScreenId() {
+    const visibleScreen = document.querySelector('.screen-wrapper[style*="display: flex"]');
+    return visibleScreen ? visibleScreen.id : 'screen-result';
+  }
+
+  function openRestaurantDetail(name, returnScreen) {
     const detail = restaurantDetails[name] || restaurantDetails['Cơm Tấm Bà Lan'];
     const detailTitle = document.querySelector('#screen-detail .hero-title');
     const detailMatch = document.querySelector('#screen-detail .match-box-val');
     const detailBg = document.querySelector('#screen-detail .hero-bg');
+
+    detailReturnScreen = returnScreen || getCurrentScreenId();
 
     if (detailTitle) detailTitle.innerHTML = detail.title;
     if (detailMatch) detailMatch.textContent = detail.match;
@@ -1378,10 +1408,62 @@ html_code = """
     });
   });
 
+  // Từ Map -> lọc danh sách và mở chi tiết quán
+  const mapSearchInput = document.querySelector('#screen-map .search-input');
+  const mapRestaurantCards = document.querySelectorAll('#screen-map .res-card');
+  const mapMarkers = document.querySelectorAll('#screen-map .map-marker');
+  const mapEmptyResults = document.querySelector('#screen-map .empty-results');
+
+  function normalizeMapSearchText(value) {
+    return (value || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd');
+  }
+
+  function filterMapRestaurants() {
+    const keyword = normalizeMapSearchText(mapSearchInput ? mapSearchInput.value : '');
+    let visibleCount = 0;
+
+    mapRestaurantCards.forEach(card => {
+      const searchableText = normalizeMapSearchText([
+        card.dataset.restaurant,
+        card.querySelector('.res-name')?.textContent,
+        card.querySelector('.res-meta')?.textContent,
+        card.querySelector('.match-badge')?.textContent
+      ].join(' '));
+      const isMatch = !keyword || searchableText.includes(keyword);
+      card.classList.toggle('is-hidden', !isMatch);
+      if (isMatch) visibleCount += 1;
+    });
+
+    mapMarkers.forEach(marker => {
+      const searchableText = normalizeMapSearchText(marker.dataset.restaurant);
+      marker.classList.toggle('is-hidden', Boolean(keyword) && !searchableText.includes(keyword));
+    });
+
+    if (mapEmptyResults) {
+      mapEmptyResults.classList.toggle('is-visible', visibleCount === 0);
+    }
+  }
+
+  if (mapSearchInput) {
+    mapSearchInput.addEventListener('input', filterMapRestaurants);
+  }
+
+  mapRestaurantCards.forEach(card => {
+    card.addEventListener('click', () => openRestaurantDetail(card.dataset.restaurant, 'screen-map'));
+  });
+
+  mapMarkers.forEach(marker => {
+    marker.addEventListener('click', () => openRestaurantDetail(marker.dataset.restaurant, 'screen-map'));
+  });
+
   // Back từ Detail -> Result
   const backBtn = document.querySelector('#screen-detail .circle-btn'); 
   if (backBtn) {
-    backBtn.addEventListener('click', () => switchScreen('screen-result'));
+    backBtn.addEventListener('click', () => switchScreen(detailReturnScreen || 'screen-result'));
   }
 
   // Đổi tab "Quán ăn" và "Món lẻ" (giữa Result và Result 1)
@@ -1485,11 +1567,10 @@ html_code = """
   // 8. CÁC NÚT ĐẶC BIỆT KHÁC
   // ==========================================
   
-  // Nút đặt món bữa trưa bên Meal Plan
-  const orderLunchBtn = document.querySelector('.btn-order-lunch');
-  if (orderLunchBtn) {
-    orderLunchBtn.addEventListener('click', () => switchScreen('screen-detail'));
-  }
+  // Nút đặt món bên Meal Plan
+  document.querySelectorAll('#screen-mealplan .btn-order').forEach(orderBtn => {
+    orderBtn.addEventListener('click', () => switchScreen('screen-detail'));
+  });
 
   // Click vào Cơm Tấm Bà Lan bên màn Khám Phá
   const recentComTam = document.getElementById('btn-recent-comtam');
