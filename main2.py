@@ -157,6 +157,10 @@ html_code = """
   .hero-bg::before { content: ''; position: absolute; inset: 0; background: var(--hero-image, url('https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?auto=format&fit=crop&w=600&q=80')) center/cover; opacity: 0.6; mix-blend-mode: overlay; }  .hero-bg::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 70%; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%); }
   .top-nav { position: relative; z-index: 10; display: flex; justify-content: space-between; align-items: center; }
   .circle-btn { width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.25); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); }
+  .favorite-btn { transition: background 0.2s, transform 0.2s; }
+  .favorite-btn:active { transform: scale(0.94); }
+  .favorite-btn.is-favorite { background: rgba(255, 90, 31, 0.95); border-color: rgba(255,255,255,0.35); }
+  .favorite-btn.is-favorite svg { fill: #fff; stroke: #fff; }
   .hero-content { position: relative; z-index: 10; }
   .rec-badge { display: inline-block; background: #FF5A1F; color: #fff; font-family: 'Sora', sans-serif; font-size: 10px; font-weight: 800; letter-spacing: 1px; padding: 6px 12px; border-radius: 12px; text-transform: uppercase; margin-bottom: 12px; }
   .hero-title-row { display: flex; justify-content: space-between; align-items: flex-end; }
@@ -326,6 +330,7 @@ html_code = """
   #screen-discover .recent-info { flex: 1; }
   #screen-discover .recent-name { font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 800; color: #1a1a1a; margin-bottom: 4px; }
   #screen-discover .recent-desc { font-size: 12px; color: #999; font-weight: 500; }
+  #screen-discover .favorite-empty { margin: 0 24px; background: #fff; border: 1px dashed #e8e6e0; border-radius: 20px; padding: 18px; color: #888; font-size: 13px; font-weight: 700; text-align: center; }
   #screen-discover .chevron-icon { color: #ccc; margin-right: 8px; }
   #screen-loading { position: absolute; inset: 0; z-index: 50; background: #f5f3ef; }
 
@@ -792,13 +797,13 @@ html_code = """
       <div class="hero-bg"></div>
       
       <div class="top-nav">
-        <div class="circle-btn">
+        <div class="circle-btn detail-back-btn" title="Quay lại">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12 19 5 12 12 5"></polyline>
           </svg>
         </div>
-        <div class="circle-btn">
+        <div class="circle-btn favorite-btn" title="Thêm vào yêu thích">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
           </svg>
@@ -1269,36 +1274,13 @@ html_code = """
 
     <div class="section-header">
       <div class="section-title">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-        Vừa xem gần đây
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+        Danh sách yêu thích
       </div>
     </div>
 
-    <div class="recent-list">
-      <div class="recent-item" data-restaurant="Quán Ngon Sài Gòn">
-        <img src="https://images.unsplash.com/photo-1555126634-323283e090fa?auto=format&fit=crop&w=150&q=80" alt="Quán Ngon" class="recent-img">
-        <div class="recent-info">
-          <div class="recent-name">Quán Ngon Sài Gòn</div>
-          <div class="recent-desc">Cơm, Bún, Phở • 2.1 km</div>
-        </div>
-        <svg class="chevron-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-      </div>
-      <!-- ID ĐƯỢC GẮN VÀO ĐÂY ĐỂ BẤM CHUYỂN TRANG -->
-      <div class="recent-item" id="btn-recent-comtam" data-restaurant="Cơm Tấm Bà Lan">
-        <img src="https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?auto=format&fit=crop&w=150&q=80" alt="Cơm Tấm Bà Lan" class="recent-img">        <div class="recent-info">
-          <div class="recent-name">Cơm Tấm Bà Lan</div>
-          <div class="recent-desc">Đồ nướng, Cơm • 1.2 km</div>
-        </div>
-        <svg class="chevron-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-      </div>
-      <div class="recent-item" data-restaurant="Bún Bò Huế Chu">
-        <img src="https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?auto=format&fit=crop&w=150&q=80" alt="Bún bò" class="recent-img">
-        <div class="recent-info">
-          <div class="recent-name">Bún Bò Huế Chu</div>
-          <div class="recent-desc">Bún, Phở, Món nước • 3.5 km</div>
-        </div>
-        <svg class="chevron-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-      </div>
+    <div class="recent-list favorite-list">
+      <div class="favorite-empty">Bấm tim ở trang quán ăn để lưu vào danh sách yêu thích</div>
     </div>
 
   </div>
@@ -1526,6 +1508,7 @@ html_code = """
   let activeOrderContext = 'detail';
   let pendingMealId = null;
   let selectedMealId = null;
+  const favoriteRestaurants = new Set();
   const mealPlanNutrition = { calories: 0, protein: 0, carbs: 0 };
   const orderedMealIds = new Set();
   const mealPlanMeals = {
@@ -1550,6 +1533,8 @@ html_code = """
     if (detailTitle) detailTitle.innerHTML = detail.title;
     if (detailMatch) detailMatch.textContent = detail.match;
     if (detailBg) detailBg.style.setProperty('--hero-image', detail.image);
+    selectedRestaurantName = detail.name;
+    updateFavoriteButton();
     resetQuickCart();
 
     switchScreen('screen-detail');
@@ -1667,6 +1652,45 @@ html_code = """
     return digits ? Number(digits) : 0;
   }
 
+  function getRestaurantImageUrl(detail) {
+    const match = (detail?.image || '').match(/url\\(['"]?([^'")]+)['"]?\\)/);
+    return match ? match[1] : 'https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?auto=format&fit=crop&w=150&q=80';
+  }
+
+  function updateFavoriteButton() {
+    const favoriteBtn = document.querySelector('#screen-detail .favorite-btn');
+    if (!favoriteBtn) return;
+
+    const isFavorite = favoriteRestaurants.has(selectedRestaurantName);
+    favoriteBtn.classList.toggle('is-favorite', isFavorite);
+    favoriteBtn.setAttribute('title', isFavorite ? 'Bỏ khỏi yêu thích' : 'Thêm vào yêu thích');
+  }
+
+  function renderFavoriteRestaurants() {
+    const favoriteList = document.querySelector('#screen-discover .favorite-list');
+    if (!favoriteList) return;
+
+    const favoriteItems = Array.from(favoriteRestaurants)
+      .map(name => restaurantDetails[name])
+      .filter(Boolean);
+
+    if (!favoriteItems.length) {
+      favoriteList.innerHTML = '<div class="favorite-empty">Bấm tim ở trang quán ăn để lưu vào danh sách yêu thích</div>';
+      return;
+    }
+
+    favoriteList.innerHTML = favoriteItems.map(detail => `
+      <div class="recent-item" data-restaurant="${escapeHtml(detail.name)}">
+        <img src="${escapeHtml(getRestaurantImageUrl(detail))}" alt="${escapeHtml(detail.name)}" class="recent-img">
+        <div class="recent-info">
+          <div class="recent-name">${escapeHtml(detail.name)}</div>
+          <div class="recent-desc">${escapeHtml(detail.price)} • ${escapeHtml(detail.distance.split('•')[0].trim())}</div>
+        </div>
+        <svg class="chevron-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </div>
+    `).join('');
+  }
+
   function updateMealPlanCart(mealId) {
     const meal = mealPlanMeals[mealId];
     const cartBox = document.querySelector('#screen-mealplan .mealplan-cart-box');
@@ -1754,6 +1778,7 @@ html_code = """
     if (priceBadge) priceBadge.textContent = detail.price;
     if (firstTag) firstTag.textContent = detail.tag;
     if (scrollContent) scrollContent.scrollTo({ top: 140, behavior: 'smooth' });
+    updateFavoriteButton();
   }
 
   // Từ Result -> Detail
@@ -1845,9 +1870,23 @@ html_code = """
   });
 
   // Back từ Detail -> Result
-  const backBtn = document.querySelector('#screen-detail .circle-btn'); 
+  const backBtn = document.querySelector('#screen-detail .detail-back-btn'); 
   if (backBtn) {
     backBtn.addEventListener('click', () => switchScreen(detailReturnScreen || 'screen-result'));
+  }
+
+  const favoriteBtn = document.querySelector('#screen-detail .favorite-btn');
+  if (favoriteBtn) {
+    favoriteBtn.addEventListener('click', event => {
+      event.stopPropagation();
+      if (favoriteRestaurants.has(selectedRestaurantName)) {
+        favoriteRestaurants.delete(selectedRestaurantName);
+      } else {
+        favoriteRestaurants.add(selectedRestaurantName);
+      }
+      updateFavoriteButton();
+      renderFavoriteRestaurants();
+    });
   }
 
   // Đổi tab "Quán ăn" và "Món lẻ" (giữa Result và Result 1)
