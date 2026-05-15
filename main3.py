@@ -680,6 +680,39 @@ def remove_home_top_action_icons(results_html):
     return results_html.replace('</style>', hide_top_actions_css + '\n</style>', 1)
 
 
+def sync_result_tab_indicator(results_html):
+    """Đồng bộ active indicator của segmented tabs ngay khi đổi Quán ăn/Món lẻ."""
+    sync_helper_js = """
+  function syncResultTabIndicator(targetId) {
+    const tabState = {
+      'screen-result': 0,
+      'screen-result1': 1
+    };
+    const activeIndex = tabState[targetId];
+    if (activeIndex === undefined) return;
+
+    ['screen-result', 'screen-result1'].forEach(screenId => {
+      const buttons = document.querySelectorAll('#' + screenId + ' .tab-btn');
+      buttons.forEach((button, index) => {
+        button.classList.toggle('active', index === activeIndex);
+        button.classList.toggle('inactive', index !== activeIndex);
+      });
+    });
+  }
+"""
+    results_html = results_html.replace(
+        "  function switchResultTab(targetId) {\n",
+        sync_helper_js + "\n  function switchResultTab(targetId) {\n",
+        1
+    )
+    results_html = results_html.replace(
+        "    if (!newScreen || currentScreenId === targetId) return;\n\n    isAnimating = false;",
+        "    if (!newScreen || currentScreenId === targetId) return;\n\n    syncResultTabIndicator(targetId);\n    isAnimating = false;",
+        1
+    )
+    return results_html
+
+
 def add_map_screen_to_results(results_html, map_style, map_body):
     """Tiêm screen-map vào HTML của main2 và dùng lại switchScreen/bottom-nav sẵn có."""
     map_screen = f"""
@@ -711,6 +744,7 @@ style_hunger   = scope_css(style_hunger,   'screen-hunger')
 style_diet     = scope_css(style_diet,     'screen-diet')
 style_app7     = scope_css(style_app7,     'screen-app7')
 html_results   = remove_home_top_action_icons(html_results)
+html_results   = sync_result_tab_indicator(html_results)
 html_results   = add_map_screen_to_results(html_results, style_map, body_map)
 
 # --- Chèn nội dung vào placeholder ---
