@@ -138,6 +138,9 @@ html_code = """
   .needs-item-val { font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 700; color: #1a1a1a; }
   #screen-result .scroll-content > .hero-title,
   #screen-result1 .scroll-content > .hero-title { font-family: 'Sora', sans-serif; font-size: 36px; font-weight: 800; color: #1a1a1a; line-height: 1.15; letter-spacing: -1.5px; padding: 0 24px; margin-bottom: 28px; }
+  #screen-result1 .scroll-content { padding-bottom: 210px; }
+  #screen-result1 .floating-order-box { bottom: 86px; }
+  #screen-result1 .needs-card { bottom: 168px; }
   .food-card-peek { margin: 0 20px 20px; border-radius: 26px; background: #2a2a2a; height: 80px; overflow: hidden; position: relative; display: flex; align-items: center; padding: 0 18px; justify-content: space-between; cursor: pointer; }
   .food-card-peek::after { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.55); }
   .peek-name { font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 800; color: #fff; position: relative; z-index: 1; letter-spacing: -0.3px; }
@@ -712,6 +715,38 @@ html_code = """
         <div class="needs-item-label">Thời tiết</div>
         <div class="needs-item-val">Nắng ☀️</div>
       </div>
+    </div>
+  </div>
+
+  <div class="floating-order-box">
+    <div class="cart-panel" id="singles-cart-panel">
+      <div class="cart-panel-head">
+        <div class="cart-panel-title">Giỏ hàng của bạn</div>
+        <button class="cart-panel-close" aria-label="Đóng giỏ hàng">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="cart-items">
+        <div class="cart-empty">Chưa có món nào trong giỏ</div>
+      </div>
+    </div>
+    <div class="quick-cart-bar">
+      <button class="cart-icon-wrap" type="button" aria-label="Mở giỏ hàng">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="21" r="1"></circle>
+          <circle cx="20" cy="21" r="1"></circle>
+          <path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h8.7a2 2 0 0 0 2-1.6L23 6H6"></path>
+        </svg>
+        <span class="cart-count">0</span>
+      </button>
+      <div class="cart-summary">
+        <span class="cart-label">Tổng cộng</span>
+        <span class="cart-total">0 đ</span>
+      </div>
+      <button class="order-now-btn">Đặt ngay</button>
     </div>
   </div>
 
@@ -1487,7 +1522,7 @@ html_code = """
   let selectedRestaurantName = 'Cơm Tấm Bà Lan';
   let detailReturnScreen = 'screen-result';
   let cartItems = [];
-  let cartPanelOpen = false;
+  let activeCartPanelId = null;
   let activeOrderContext = 'detail';
   let pendingMealId = null;
   let selectedMealId = null;
@@ -1543,54 +1578,54 @@ html_code = """
   }
 
   function updateQuickCart() {
-    const countEl = document.querySelector('#screen-detail .cart-count');
-    const totalEl = document.querySelector('#screen-detail .cart-total');
-    const cartIcon = document.querySelector('#screen-detail .cart-icon-wrap');
-    const cartPanel = document.getElementById('detail-cart-panel');
-    const cartItemsEl = document.querySelector('#screen-detail .cart-items');
-    const orderBtn = document.querySelector('#screen-detail .order-now-btn');
     const totals = getCartTotals();
-
-    if (countEl) countEl.textContent = totals.count;
-    if (totalEl) totalEl.textContent = formatVnd(totals.amount);
-    if (orderBtn) orderBtn.disabled = totals.count === 0;
-    if (cartIcon) {
-      cartIcon.classList.toggle('is-active', cartPanelOpen);
-      cartIcon.setAttribute('aria-expanded', cartPanelOpen ? 'true' : 'false');
-    }
-    if (cartPanel) cartPanel.classList.toggle('is-open', cartPanelOpen);
-    if (!cartItemsEl) return;
-
-    if (!cartItems.length) {
-      cartItemsEl.innerHTML = '<div class="cart-empty">Chưa có món nào trong giỏ</div>';
-      return;
-    }
-
-    cartItemsEl.innerHTML = cartItems.map(item => `
-      <div class="cart-item" data-cart-id="${escapeHtml(item.id)}">
-        <div class="cart-item-info">
-          <div class="cart-item-name">${escapeHtml(item.name)}</div>
-          <div class="cart-item-price">${formatVnd(item.price)}</div>
+    const cartHtml = cartItems.length
+      ? cartItems.map(item => `
+        <div class="cart-item" data-cart-id="${escapeHtml(item.id)}">
+          <div class="cart-item-info">
+            <div class="cart-item-name">${escapeHtml(item.name)}</div>
+            <div class="cart-item-price">${formatVnd(item.price)}</div>
+          </div>
+          <div class="qty-control" aria-label="Chỉnh số lượng ${escapeHtml(item.name)}">
+            <button class="qty-btn cart-qty-minus" type="button" aria-label="Giảm số lượng">−</button>
+            <span class="qty-val">${item.quantity}</span>
+            <button class="qty-btn cart-qty-plus" type="button" aria-label="Tăng số lượng">+</button>
+          </div>
+          <button class="remove-cart-item" type="button" aria-label="Xoá ${escapeHtml(item.name)}">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+            </svg>
+          </button>
         </div>
-        <div class="qty-control" aria-label="Chỉnh số lượng ${escapeHtml(item.name)}">
-          <button class="qty-btn cart-qty-minus" type="button" aria-label="Giảm số lượng">−</button>
-          <span class="qty-val">${item.quantity}</span>
-          <button class="qty-btn cart-qty-plus" type="button" aria-label="Tăng số lượng">+</button>
-        </div>
-        <button class="remove-cart-item" type="button" aria-label="Xoá ${escapeHtml(item.name)}">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="3 6 5 6 21 6"></polyline>
-            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-          </svg>
-        </button>
-      </div>
-    `).join('');
+      `).join('')
+      : '<div class="cart-empty">Chưa có món nào trong giỏ</div>';
+
+    document.querySelectorAll('#screen-detail, #screen-result1').forEach(screen => {
+      const countEl = screen.querySelector('.cart-count');
+      const totalEl = screen.querySelector('.cart-total');
+      const cartIcon = screen.querySelector('.cart-icon-wrap');
+      const cartPanel = screen.querySelector('.cart-panel');
+      const cartItemsEl = screen.querySelector('.cart-items');
+      const orderBtn = screen.querySelector('.order-now-btn');
+      const isOpen = Boolean(cartPanel && cartPanel.id === activeCartPanelId);
+
+      if (countEl) countEl.textContent = totals.count;
+      if (totalEl) totalEl.textContent = formatVnd(totals.amount);
+      if (orderBtn) orderBtn.disabled = totals.count === 0;
+      if (cartIcon) {
+        cartIcon.classList.toggle('is-active', isOpen);
+        cartIcon.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      }
+      if (cartPanel) cartPanel.classList.toggle('is-open', isOpen);
+      if (cartItemsEl) cartItemsEl.innerHTML = cartHtml;
+    });
   }
 
   function resetQuickCart() {
     cartItems = [];
-    cartPanelOpen = false;
+    activeCartPanelId = null;
     updateQuickCart();
   }
 
@@ -1617,13 +1652,13 @@ html_code = """
     if (item.quantity <= 0) {
       cartItems = cartItems.filter(cartItem => cartItem.id !== itemId);
     }
-    if (!cartItems.length) cartPanelOpen = false;
+    if (!cartItems.length) activeCartPanelId = null;
     updateQuickCart();
   }
 
   function removeCartItem(itemId) {
     cartItems = cartItems.filter(item => item.id !== itemId);
-    if (!cartItems.length) cartPanelOpen = false;
+    if (!cartItems.length) activeCartPanelId = null;
     updateQuickCart();
   }
 
@@ -1870,34 +1905,56 @@ html_code = """
   // ==========================================
   // 6. TRACKING SCREEN (Bản đồ Shipper)
   // ==========================================
-  document.querySelectorAll('#screen-detail .add-btn').forEach(addBtn => {
+  document.querySelectorAll('#screen-detail .add-btn, #screen-result1 .add-btn').forEach(addBtn => {
     addBtn.addEventListener('click', event => {
       event.stopPropagation();
       addMenuItemToCart(addBtn.closest('.menu-item'));
     });
   });
 
-  const detailCartIcon = document.querySelector('#screen-detail .cart-icon-wrap');
-  if (detailCartIcon) {
-    detailCartIcon.addEventListener('click', event => {
+  document.addEventListener('click', event => {
+    const singlesAddBtn = event.target.closest('#screen-result1 .add-btn');
+    if (singlesAddBtn) {
       event.stopPropagation();
-      cartPanelOpen = !cartPanelOpen;
+      addMenuItemToCart(singlesAddBtn.closest('.menu-item'));
+      return;
+    }
+
+    const singlesOrderBtn = event.target.closest('#screen-result1 .order-now-btn');
+    if (singlesOrderBtn && cartItems.length) {
+      event.stopPropagation();
+      activeCartPanelId = null;
+      updateQuickCart();
+      activeOrderContext = 'singles';
+      switchScreen('screen-tracking');
+      setTimeout(() => {
+        if(document.getElementById('screen-tracking').style.display === 'flex') {
+          switchScreen('screen-success');
+        }
+      }, 5000);
+    }
+  });
+
+  document.querySelectorAll('#screen-detail .cart-icon-wrap, #screen-result1 .cart-icon-wrap').forEach(cartIcon => {
+    cartIcon.addEventListener('click', event => {
+      event.stopPropagation();
+      const cartPanel = cartIcon.closest('.floating-order-box')?.querySelector('.cart-panel');
+      if (!cartPanel) return;
+      activeCartPanelId = activeCartPanelId === cartPanel.id ? null : cartPanel.id;
       updateQuickCart();
     });
-  }
+  });
 
-  const detailCartClose = document.querySelector('#screen-detail .cart-panel-close');
-  if (detailCartClose) {
-    detailCartClose.addEventListener('click', event => {
+  document.querySelectorAll('#screen-detail .cart-panel-close, #screen-result1 .cart-panel-close').forEach(cartClose => {
+    cartClose.addEventListener('click', event => {
       event.stopPropagation();
-      cartPanelOpen = false;
+      activeCartPanelId = null;
       updateQuickCart();
     });
-  }
+  });
 
-  const detailCartPanel = document.getElementById('detail-cart-panel');
-  if (detailCartPanel) {
-    detailCartPanel.addEventListener('click', event => {
+  document.querySelectorAll('#screen-detail .cart-panel, #screen-result1 .cart-panel').forEach(cartPanel => {
+    cartPanel.addEventListener('click', event => {
       event.stopPropagation();
       const cartItem = event.target.closest('.cart-item');
       if (!cartItem) return;
@@ -1910,19 +1967,19 @@ html_code = """
         removeCartItem(cartItem.dataset.cartId);
       }
     });
-  }
+  });
 
-  const oldOrderBtn = document.querySelector('#screen-detail .order-now-btn');
-  if (oldOrderBtn) {
+  document.querySelectorAll('#screen-detail .order-now-btn, #screen-result1 .order-now-btn').forEach(oldOrderBtn => {
     // Clone node để dọn dẹp các event click cũ bị trùng lặp
     const newOrderBtn = oldOrderBtn.cloneNode(true);
     oldOrderBtn.parentNode.replaceChild(newOrderBtn, oldOrderBtn);
     
-    newOrderBtn.addEventListener('click', () => {
+    newOrderBtn.addEventListener('click', event => {
+      event.stopPropagation();
       if (!cartItems.length) return;
-      cartPanelOpen = false;
+      activeCartPanelId = null;
       updateQuickCart();
-      activeOrderContext = 'detail';
+      activeOrderContext = newOrderBtn.closest('#screen-result1') ? 'singles' : 'detail';
       switchScreen('screen-tracking');
       // Sau 5s tự nhảy sang báo thành công
       setTimeout(() => {
@@ -1932,11 +1989,18 @@ html_code = """
         }
       }, 5000);
     });
-  }
+  });
 
   const backTracking = document.getElementById('btn-back-tracking');
   if (backTracking) {
-    backTracking.addEventListener('click', () => switchScreen(activeOrderContext === 'mealplan' ? 'screen-mealplan' : 'screen-detail'));
+    backTracking.addEventListener('click', () => {
+      const returnScreen = activeOrderContext === 'mealplan'
+        ? 'screen-mealplan'
+        : activeOrderContext === 'singles'
+          ? 'screen-result1'
+          : 'screen-detail';
+      switchScreen(returnScreen);
+    });
   }
 
   const shipperMarker = document.getElementById('shipper-btn');
