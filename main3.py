@@ -394,7 +394,7 @@ transition_js = """
         resultFrame.srcdoc = resultTemplate.value;
     };
 
-    window.switchToBudgetFromResults = function() {
+    window.switchToHomeFromResults = function() {
         var onboardingView = document.getElementById('onboarding-view');
         var resultsView = document.getElementById('results-view');
         var resultFrame = document.getElementById('main2-frame');
@@ -406,12 +406,17 @@ transition_js = """
         [splashScreen, loginScreen, registerScreen, homeScreen, budgetScreen, hungerScreen, dietScreen, app7Screen].forEach(function(screen) {
             if (screen) screen.classList.remove('active', 'just-entered');
         });
-        if (budgetScreen) budgetScreen.classList.add('active');
+        if (homeScreen) {
+            homeScreen.classList.add('active', 'just-entered');
+            setTimeout(function() {
+                homeScreen.classList.remove('just-entered');
+            }, 400);
+        }
     };
 
     window.addEventListener('message', function(event) {
         if (event.data && event.data.type === 'foodmind-edit-needs') {
-            window.switchToBudgetFromResults();
+            window.switchToHomeFromResults();
         }
     });
 
