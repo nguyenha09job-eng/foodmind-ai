@@ -244,7 +244,7 @@ html_code = """
   <!-- Grid Options -->
   <div class="grid-container">
     <!-- Option 1 -->
-    <div class="option-card" onclick="selectOption(this)">
+    <div class="option-card" data-time-key="express" onclick="selectOption(this)">
       <div class="card-icon bg-orange">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FB8C00" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
@@ -252,9 +252,9 @@ html_code = """
       </div>
       <span class="option-text">Cực nhanh</span>
     </div>
-    
+
     <!-- Option 2 (Active) -->
-    <div class="option-card active" onclick="selectOption(this)">
+    <div class="option-card active" data-time-key="fast" onclick="selectOption(this)">
       <div class="card-icon bg-green">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"></circle>
@@ -265,7 +265,7 @@ html_code = """
     </div>
 
     <!-- Option 3 -->
-    <div class="option-card" onclick="selectOption(this)">
+    <div class="option-card" data-time-key="normal" onclick="selectOption(this)">
       <div class="card-icon bg-blue">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1976D2" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"></circle>
@@ -276,7 +276,7 @@ html_code = """
     </div>
 
     <!-- Option 4 -->
-    <div class="option-card" onclick="selectOption(this)">
+    <div class="option-card" data-time-key="no_rush" onclick="selectOption(this)">
       <div class="card-icon bg-gray">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#757575" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"></circle>
@@ -307,9 +307,12 @@ html_code = """
 </div>
 
 <script>
+  window.userTime = 'fast';
+
   function selectOption(el) {
     document.querySelectorAll('.option-card').forEach(card => card.classList.remove('active'));
     el.classList.add('active');
+    window.userTime = el.getAttribute('data-time-key') || 'fast';
   }
 </script>
 

@@ -358,20 +358,39 @@ transition_js = """
         switchTab(app7Screen, dietScreen);
     };
 
+    window.collectPreferences = function() {
+        var prefs = {
+            budget: (window.userBudget) || '30_50k',
+            time: (window.userTime) || 'fast',
+            hunger: (window.foodmindHunger && window.foodmindHunger.value) || (window.userHunger) || 3.5,
+            diet: (window.userDiet) || 'Normal',
+            weather: (window.userWeather) || 'Normal',
+            cuisine: (window.userCuisine) || 'Việt Nam'
+        };
+        return prefs;
+    };
+
+    window.buildPrefsHash = function() {
+        var p = window.collectPreferences();
+        return '#budget=' + encodeURIComponent(p.budget) +
+               '&time=' + encodeURIComponent(p.time) +
+               '&hunger=' + encodeURIComponent(p.hunger) +
+               '&diet=' + encodeURIComponent(p.diet) +
+               '&weather=' + encodeURIComponent(p.weather) +
+               '&cuisine=' + encodeURIComponent(p.cuisine);
+    };
+
     window.switchToResults = function() {
-        // Redirect đến main2.py bằng cách thay thế 'main' thành 'main2' trong URL
-        let currentHref = window.location.href;
-        // Xử lý nhiều trường hợp: /main, /main?..., ?script=main, main.py, etc.
-        let newHref = currentHref
+        var hash = window.buildPrefsHash();
+        var currentHref = window.location.href;
+        var newHref = currentHref
             .replace(/([/?&])main([/?&#]|$)/, '$1main2$2')
             .replace(/main\\.py/, 'main2.py');
-        
-        if (newHref !== currentHref) {
-            window.location.href = newHref;
-        } else {
-            // Nếu URL không chứa 'main', thử thêm ?page=main2
-            window.location.href = currentHref.split('?')[0] + '?page=main2';
+        if (newHref === currentHref) {
+            newHref = currentHref.split('?')[0] + '?page=main2';
         }
+        newHref = newHref.split('#')[0] + hash;
+        window.location.href = newHref;
     };
 
     // --- Single-selection radio behavior (scoped per screen) ---
@@ -381,6 +400,7 @@ transition_js = """
             card.classList.remove('active');
         });
         el.classList.add('active');
+        window.userBudget = el.getAttribute('data-budget-key') || '30_50k';
     };
 
     window.selectBudgetOption = function(el) {
@@ -389,6 +409,7 @@ transition_js = """
             card.classList.remove('active');
         });
         el.classList.add('active');
+        window.userTime = el.getAttribute('data-time-key') || 'fast';
     };
 
     window.selectDietOption = function(el) {
@@ -397,6 +418,7 @@ transition_js = """
             card.classList.remove('active');
         });
         el.classList.add('active');
+        window.userDiet = el.getAttribute('data-diet-key') || 'Normal';
     };
 
     window.selectApp7Weather = function(el) {

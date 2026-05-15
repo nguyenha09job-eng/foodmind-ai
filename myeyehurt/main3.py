@@ -4,6 +4,9 @@ import html
 from pathlib import Path
 import re
 
+# --- Import hàm sinh HTML động cho bản đồ ---
+from foodmind_app17 import generate_map_html
+
 # --- Cấu hình ---
 st.set_page_config(
     page_title="FoodMind AI",
@@ -107,7 +110,7 @@ html_hunger   = extract_html(BASE_DIR / "foodmind_app5.py")
 html_diet     = extract_html(BASE_DIR / "foodmind_app6.py")
 html_app7     = extract_html(BASE_DIR / "foodmind_app7.py")
 html_results  = extract_html(BASE_DIR / "main2.py")
-html_map      = extract_html(BASE_DIR / "foodmind_app16.py")
+html_map      = generate_map_html()
 
 html_files = {
     "foodmind_app.py": html_splash,
@@ -119,7 +122,7 @@ html_files = {
     "foodmind_app6.py": html_diet,
     "foodmind_app7.py": html_app7,
     "main2.py": html_results,
-    "foodmind_app16.py": html_map,
+    "foodmind_app17.py": html_map,
 }
 missing_files = [name for name, content in html_files.items() if not content]
 
@@ -428,6 +431,17 @@ transition_js = """
         switchTab(app7Screen, dietScreen);
     };
 
+    window.collectPreferences = function() {
+        return {
+            budget: (window.userBudget) || '30_50k',
+            time: (window.userTime) || 'fast',
+            hunger: (window.foodmindHunger && window.foodmindHunger.value) || (window.userHunger) || 3.5,
+            diet: (window.userDiet) || 'Normal',
+            weather: (window.userWeather) || 'Normal',
+            cuisine: (window.userCuisine) || 'Việt Nam'
+        };
+    };
+
     window.switchToResults = function() {
         var onboardingView = document.getElementById('onboarding-view');
         var resultsView = document.getElementById('results-view');
@@ -438,11 +452,28 @@ transition_js = """
             return;
         }
 
+        var prefs = window.collectPreferences();
+
         onboardingView.style.display = 'none';
         resultsView.style.display = 'flex';
 
-        // Nạp main2.py đúng lúc bấm nút để màn loading/result trong main2 chạy từ đầu.
+        resultFrame.addEventListener('load', function() {
+            resultFrame.contentWindow.postMessage({
+                type: 'foodmind-prefs',
+                prefs: prefs
+            }, '*');
+        });
+
         resultFrame.srcdoc = resultTemplate.value;
+
+        setTimeout(function() {
+            try {
+                resultFrame.contentWindow.postMessage({
+                    type: 'foodmind-prefs',
+                    prefs: prefs
+                }, '*');
+            } catch(e) {}
+        }, 500);
     };
 
     window.switchToHomeFromResults = function() {
@@ -476,6 +507,7 @@ transition_js = """
             card.classList.remove('active');
         });
         el.classList.add('active');
+        window.userBudget = el.getAttribute('data-budget-key') || '30_50k';
     };
 
     window.selectBudgetOption = function(el) {
@@ -484,6 +516,7 @@ transition_js = """
             card.classList.remove('active');
         });
         el.classList.add('active');
+        window.userTime = el.getAttribute('data-time-key') || 'fast';
     };
 
     window.selectDietOption = function(el) {
@@ -492,6 +525,7 @@ transition_js = """
             card.classList.remove('active');
         });
         el.classList.add('active');
+        window.userDiet = el.getAttribute('data-diet-key') || 'Normal';
     };
 
     window.selectApp7Weather = function(el) {
@@ -500,6 +534,7 @@ transition_js = """
             card.classList.remove('active');
         });
         el.classList.add('active');
+        window.userWeather = el.getAttribute('data-weather-key') || 'Normal';
     };
 
     window.selectApp7Pill = function(el) {
@@ -508,6 +543,7 @@ transition_js = """
             pill.classList.remove('active');
         });
         el.classList.add('active');
+        window.userCuisine = el.getAttribute('data-cuisine-key') || 'Việt Nam';
     };
 })();
 </script>
@@ -957,6 +993,28 @@ html_results   = sync_result_tab_indicator(html_results)
 html_results   = add_needs_panel_toggle(html_results)
 html_results   = add_map_screen_to_results(html_results, style_map, body_map)
 html_results   = apply_app_font(html_results)
+
+# --- Gọi backend fuzzy logic để lấy dữ liệu thật ---
+import sys, os, json
+sys.path.insert(0, str(BASE_DIR.parent / 'mybackhurt'))
+os.chdir(str(BASE_DIR.parent / 'mybackhurt'))
+from fuzzylogic import get_recommendations, load_data, get_meal_type
+
+try:
+    _config, _dishes_df, _restaurants_df = load_data()
+    _default_inputs = {
+        'lat': 10.7614, 'lng': 106.6686,
+        'budget': '30_50k', 'time': 'fast',
+        'hunger': 6.5, 'health_goal': 'Normal',
+        'weather': 'Normal', 'cuisine': 'Việt Nam'
+    }
+    _results = get_recommendations(_default_inputs, _config, _dishes_df, _restaurants_df)
+    _inject_json = json.dumps(_results[:30], ensure_ascii=False)
+    _inject_script = f'<script>window.foodmindBackendResults = {_inject_json};</script>'
+    html_results = html_results.replace('</body>', _inject_script + '\n</body>')
+except Exception as _e:
+    _inject_script = f'<script>window.foodmindBackendError = "{str(_e)}";</script>'
+    html_results = html_results.replace('</body>', _inject_script + '\n</body>')
 
 # --- Chèn nội dung vào placeholder ---
 combined_html = combined_html.replace('STYLE_SPLASH_PLACEHOLDER', style_splash)

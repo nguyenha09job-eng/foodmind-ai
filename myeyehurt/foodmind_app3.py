@@ -228,19 +228,19 @@ html_code = """
 
   <!-- Options -->
   <div class="options-container">
-    <div class="option-card" onclick="selectOption(this)">
+    <div class="option-card" data-budget-key="under_30k" onclick="selectOption(this)">
       <span class="option-text">Dưới 30k</span>
     </div>
-    
-    <div class="option-card active" onclick="selectOption(this)">
+
+    <div class="option-card active" data-budget-key="30_50k" onclick="selectOption(this)">
       <span class="option-text">30k - 50k</span>
     </div>
 
-    <div class="option-card" onclick="selectOption(this)">
+    <div class="option-card" data-budget-key="50_100k" onclick="selectOption(this)">
       <span class="option-text">50k - 100k</span>
     </div>
 
-    <div class="option-card" onclick="selectOption(this)">
+    <div class="option-card" data-budget-key="over_100k" onclick="selectOption(this)">
       <span class="option-text">Trên 100k</span>
     </div>
   </div>
@@ -265,11 +265,14 @@ html_code = """
 </div>
 
 <script>
+  window.userBudget = '30_50k';
+
   function selectOption(el) {
     document.querySelectorAll('.option-card').forEach(card => {
       card.classList.remove('active');
     });
     el.classList.add('active');
+    window.userBudget = el.getAttribute('data-budget-key') || '30_50k';
   }
 </script>
 

@@ -31,9 +31,12 @@ def trapmf(x, abcd):
 # ==========================================
 # 1. TẢI DỮ LIỆU
 # ==========================================
+import os as _os
+_BASE_DIR = _os.path.dirname(_os.path.abspath(__file__))
+
 def load_data():
     try:
-        with open('config.json', 'r', encoding='utf-8') as f:
+        with open(_os.path.join(_BASE_DIR, 'config.json'), 'r', encoding='utf-8') as f:
             config = json.load(f)
     except:
         config = {
@@ -45,12 +48,12 @@ def load_data():
             "hunger_to_calorie_map": {"Snack": 250, "Light": 250, "Slightly_Hungry": 450, "Hungry": 700, "Very_Hungry": 950, "Starving": 1100},
             "score_weights": {"price": 0.3, "time": 0.2, "calorie": 0.2, "diet": 0.15, "weather": 0.15}
         }
-    
-    dishes_df = pd.read_csv('dishes.csv', sep=';')
-    if len(dishes_df.columns) < 5: 
-        dishes_df = pd.read_csv('dishes.csv', sep=',')
-        
-    restaurants_df = pd.read_csv('restaurant.csv')
+
+    dishes_df = pd.read_csv(_os.path.join(_BASE_DIR, 'dishes.csv'), sep=';', skiprows=1)
+    if len(dishes_df.columns) < 5:
+        dishes_df = pd.read_csv(_os.path.join(_BASE_DIR, 'dishes.csv'), sep=';')
+
+    restaurants_df = pd.read_csv(_os.path.join(_BASE_DIR, 'restaurant.csv'), sep=';', skiprows=1)
     return config, dishes_df, restaurants_df
 
 # ==========================================
@@ -321,3 +324,98 @@ def generate_daily_plan(user_inputs, config, dishes_df, res_dict):
                 break
                 
     return plan
+
+# ==========================================
+# 4. HÀM LẤY DANH SÁCH NHÀ HÀNG CHO BẢN ĐỒ "QUÁN GẦN NHẤT"
+# ==========================================
+CUISINE_EMOJI_MAP = {
+    'vn': '🍜', 'kr': '🍲', 'jp': '🍣', 'cn': '🥘', 'th': '🍛',
+    'eu': '🍕', 'us': '🍔', 'tw': '🧋', 'other': '🍽️'
+}
+
+def get_cuisine_emoji(cuisine_type_str):
+    if pd.isna(cuisine_type_str) or not isinstance(cuisine_type_str, str):
+        return '🍽️'
+    types = cuisine_type_str.lower().split('|')
+    for t in types:
+        t = t.strip()
+        if t in CUISINE_EMOJI_MAP:
+            return CUISINE_EMOJI_MAP[t]
+    return '🍽️'
+
+def get_nearby_restaurants_for_map(user_lat, user_lng, user_inputs=None):
+    """
+    Trả về danh sách nhà hàng được sắp xếp theo khoảng cách,
+    kèm match score và thông tin hiển thị cho giao diện bản đồ.
+    """
+    config, dishes_df, restaurants_df = load_data()
+    user_coords = (float(user_lat), float(user_lng))
+
+    if user_inputs is None:
+        user_inputs = {
+            'lat': user_lat, 'lng': user_lng,
+            'budget': '50_100k', 'time': 'normal',
+            'hunger': 5, 'health_goal': 'Normal',
+            'weather': 'Normal', 'cuisine': 'any'
+        }
+
+    user_inputs['lat'] = user_lat
+    user_inputs['lng'] = user_lng
+
+    recommendations = get_recommendations(user_inputs, config, dishes_df, restaurants_df)
+
+    restaurant_scores = {}
+    for rec in recommendations:
+        rid = rec['restaurant_id']
+        if rid not in restaurant_scores:
+            restaurant_scores[rid] = []
+        restaurant_scores[rid].append(rec['match_score'])
+
+    results = []
+    for idx, row in restaurants_df.iterrows():
+        rid = row['restaurant_id']
+        if str(row.get('is_open', 'True')).lower() == 'false':
+            continue
+
+        res_lat = row.get('lat')
+        res_lng = row.get('lng')
+        if pd.isna(res_lat) or pd.isna(res_lng):
+            continue
+
+        res_coords = (float(res_lat), float(res_lng))
+        distance_km = geodesic(user_coords, res_coords).kilometers
+
+        scores = restaurant_scores.get(rid, [])
+        if scores:
+            avg_match = sum(scores) / len(scores)
+            top_match = max(scores)
+        else:
+            avg_match = 50.0
+            top_match = 50.0
+
+        distance_m = int(round(distance_km * 1000))
+
+        if distance_m >= 1000:
+            distance_str = f"{distance_km:.1f} km"
+        else:
+            distance_str = f"{distance_m}m"
+
+        results.append({
+            'restaurant_id': rid,
+            'name': str(row.get('name', 'Unknown')),
+            'lat': float(res_lat),
+            'lng': float(res_lng),
+            'address': str(row.get('address', '')),
+            'distance_m': distance_m,
+            'distance_str': distance_str,
+            'avg_match': round(avg_match, 1),
+            'top_match': round(top_match, 1),
+            'rating': float(row.get('rating', 4.0)) if pd.notna(row.get('rating')) else 4.0,
+            'review_count': int(row.get('review_count', 0)) if pd.notna(row.get('review_count')) else 0,
+            'emoji': get_cuisine_emoji(row.get('cuisine_type', 'other')),
+            'cuisine_type': str(row.get('cuisine_type', '')),
+            'price_avg': int(row.get('price_avg', 0)) if pd.notna(row.get('price_avg')) else 0,
+        })
+
+    results.sort(key=lambda x: x['distance_m'])
+    return results

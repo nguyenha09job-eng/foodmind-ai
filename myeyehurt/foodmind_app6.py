@@ -250,32 +250,32 @@ html_code = """
   <p class="subtitle">Lựa chọn phù hợp với mục tiêu dinh dưỡng.</p>
 
   <div class="grid-container">
-    <div class="diet-card" onclick="selectOption(this)">
+    <div class="diet-card" data-diet-key="Diet" onclick="selectOption(this)">
       <div class="diet-title">Eat clean</div>
       <div class="diet-cals">300-500 kcal</div>
     </div>
-    
-    <div class="diet-card active" onclick="selectOption(this)">
+
+    <div class="diet-card active" data-diet-key="Normal" onclick="selectOption(this)">
       <div class="diet-title">Healthy</div>
       <div class="diet-cals">450-650 kcal</div>
     </div>
 
-    <div class="diet-card" onclick="selectOption(this)">
+    <div class="diet-card" data-diet-key="Diet" onclick="selectOption(this)">
       <div class="diet-title">Low carb</div>
       <div class="diet-cals">400-600 kcal</div>
     </div>
 
-    <div class="diet-card" onclick="selectOption(this)">
+    <div class="diet-card" data-diet-key="Bulking" onclick="selectOption(this)">
       <div class="diet-title">High protein</div>
       <div class="diet-cals">600-800 kcal</div>
     </div>
 
-    <div class="diet-card" onclick="selectOption(this)">
+    <div class="diet-card" data-diet-key="Bulking" onclick="selectOption(this)">
       <div class="diet-title">Bulking</div>
       <div class="diet-cals">800-1200 kcal</div>
     </div>
 
-    <div class="diet-card" onclick="selectOption(this)">
+    <div class="diet-card" data-diet-key="Normal" onclick="selectOption(this)">
       <div class="diet-title">Không quan tâm</div>
       <div class="diet-cals">Bất kỳ</div>
     </div>
@@ -312,11 +312,12 @@ html_code = """
 </div>
 
 <script>
+  window.userDiet = 'Normal';
+
   function selectOption(el) {
-    // Remove active class from all cards
     document.querySelectorAll('.diet-card').forEach(card => card.classList.remove('active'));
-    // Add active class to clicked card
     el.classList.add('active');
+    window.userDiet = el.getAttribute('data-diet-key') || 'Normal';
   }
 </script>
 

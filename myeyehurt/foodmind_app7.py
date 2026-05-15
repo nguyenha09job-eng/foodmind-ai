@@ -270,19 +270,19 @@ html_code = """
   </div>
 
   <div class="weather-grid">
-    <div class="weather-card" onclick="toggleActive(this, 'weather')">
+    <div class="weather-card" data-weather-key="Rainy" onclick="toggleActive(this, 'weather')">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><path d="M16 13v8m-8-8v8m-4-10a9 9 0 0 1 18 0v0a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/></svg>
       <span>Mưa</span>
     </div>
-    <div class="weather-card active" onclick="toggleActive(this, 'weather')">
+    <div class="weather-card active" data-weather-key="Normal" onclick="toggleActive(this, 'weather')">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.2 4.2l1.4 1.4m12.8 12.8l1.4 1.4M1 12h2m18 0h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>
       <span>Nắng</span>
     </div>
-    <div class="weather-card" onclick="toggleActive(this, 'weather')">
+    <div class="weather-card" data-weather-key="Cold" onclick="toggleActive(this, 'weather')">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><path d="M14 4c0-1.1.9-2 2-2s2 .9 2 2v12a4 4 0 0 1-8 0V4c0-1.1.9-2 2-2s2 .9 2 2z"/></svg>
       <span>Lạnh</span>
     </div>
-    <div class="weather-card" onclick="toggleActive(this, 'weather')">
+    <div class="weather-card" data-weather-key="Hot" onclick="toggleActive(this, 'weather')">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><path d="M12 9a4 4 0 0 0-2 7.5V20a2 2 0 1 0 4 0v-3.5A4 4 0 0 0 12 9z"/></svg>
       <span>Nóng</span>
     </div>
@@ -293,12 +293,12 @@ html_code = """
   </div>
 
   <div class="country-list">
-    <div class="pill active" onclick="toggleActive(this, 'pill')">Việt Nam</div>
-    <div class="pill" onclick="toggleActive(this, 'pill')">Hàn Quốc</div>
-    <div class="pill" onclick="toggleActive(this, 'pill')">Nhật Bản</div>
-      <div class="pill" onclick="toggleActive(this, 'pill')">Trung Quốc</div>
-      <div class="pill" onclick="toggleActive(this, 'pill')">Thái Lan</div>
-      <div class="pill" onclick="toggleActive(this, 'pill')">Đồ Âu</div>
+    <div class="pill active" data-cuisine-key="Việt Nam" onclick="toggleActive(this, 'pill')">Việt Nam</div>
+    <div class="pill" data-cuisine-key="Hàn Quốc" onclick="toggleActive(this, 'pill')">Hàn Quốc</div>
+    <div class="pill" data-cuisine-key="Nhật Bản" onclick="toggleActive(this, 'pill')">Nhật Bản</div>
+      <div class="pill" data-cuisine-key="Trung Quốc" onclick="toggleActive(this, 'pill')">Trung Quốc</div>
+      <div class="pill" data-cuisine-key="Thái Lan" onclick="toggleActive(this, 'pill')">Thái Lan</div>
+      <div class="pill" data-cuisine-key="Âu" onclick="toggleActive(this, 'pill')">Đồ Âu</div>
   </div>
 
   <div class="spacer"></div>
@@ -319,10 +319,18 @@ html_code = """
 </div>
 
 <script>
+  window.userWeather = 'Normal';
+  window.userCuisine = 'Việt Nam';
+
   function toggleActive(el, type) {
     const selector = type === 'weather' ? '.weather-card' : '.pill';
     document.querySelectorAll(selector).forEach(item => item.classList.remove('active'));
     el.classList.add('active');
+    if (type === 'weather') {
+      window.userWeather = el.getAttribute('data-weather-key') || 'Normal';
+    } else {
+      window.userCuisine = el.getAttribute('data-cuisine-key') || 'Việt Nam';
+    }
   }
 </script>
 

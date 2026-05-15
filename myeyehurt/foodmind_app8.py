@@ -21,7 +21,48 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-html_code = """
+# --- Đọc tham số từ URL query params ---
+params = st.query_params
+user_budget = params.get("budget", "30_50k")
+user_time = params.get("time", "fast")
+user_hunger = params.get("hunger", "3.5")
+user_diet = params.get("diet", "Normal")
+user_weather = params.get("weather", "Normal")
+user_cuisine = params.get("cuisine", "Việt Nam")
+
+# Map budget key → label
+budget_map = {"under_30k": "Dưới 30k", "30_50k": "30k - 50k", "50_100k": "50k - 100k", "over_100k": "Trên 100k"}
+budget_label = budget_map.get(user_budget, "30k - 50k")
+
+# Map time key → label
+time_map = {"express": "Cực nhanh", "fast": "Nhanh", "normal": "Bình thường", "no_rush": "Không gấp"}
+time_label = time_map.get(user_time, "Nhanh")
+
+# Compute hunger values
+try:
+    hunger_val = float(user_hunger)
+except (TypeError, ValueError):
+    hunger_val = 3.5
+hunger_pct = round((hunger_val / 10) * 100)
+
+if hunger_val <= 2.5:
+    hunger_label = "Ăn nhẹ"
+elif hunger_val <= 5:
+    hunger_label = "Hơi đói"
+elif hunger_val <= 7.5:
+    hunger_label = "Đói"
+else:
+    hunger_label = "Rất đói"
+
+# Budget percentage for bar
+budget_pcts = {"under_30k": 18, "30_50k": 40, "50_100k": 70, "over_100k": 95}
+budget_pct = budget_pcts.get(user_budget, 50)
+budget_val_text = "Cao" if budget_pct > 60 else ("Hợp lý" if budget_pct > 30 else "Thấp")
+
+# Build prefs for passing forward
+prefs_hash = f"#budget={user_budget}&time={user_time}&hunger={hunger_val}&diet={user_diet}&weather={user_weather}&cuisine={user_cuisine}"
+
+html_template = """
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -247,18 +288,11 @@ html_code = """
     height: 100%;
     border-radius: 99px;
     width: 0%;
-    animation: fillBar 1s ease 2.4s forwards;
+    transition: width 1s ease 2.4s;
   }
 
   .fill-orange { background: #FF5A1F; }
   .fill-yellow { background: #F59E0B; }
-
-  .bar-hunger { --target: 50%; }
-  .bar-budget { --target: 60%; }
-
-  @keyframes fillBar {
-    to { width: var(--target); }
-  }
 
 </style>
 </head>
@@ -341,5 +375,26 @@ html_code = """
 </body>
 </html>
 """
+
+# --- Chèn dữ liệu thực từ query params ---
+hunger_pct_str = str(hunger_pct)
+budget_pct_str = str(budget_pct)
+
+html_code = html_template.replace(
+    '<span class="progress-label">Độ đói (50%)</span>',
+    f'<span class="progress-label">Độ đói ({hunger_pct_str}%)</span>'
+).replace(
+    '<span class="progress-value">Cao</span>',
+    f'<span class="progress-value">{hunger_label}</span>'
+).replace(
+    '<span class="progress-label">Budget (30k – 50k)</span>',
+    f'<span class="progress-label">Budget ({budget_label})</span>'
+).replace(
+    '<span class="progress-value">Hợp lý</span>',
+    f'<span class="progress-value">{budget_val_text}</span>'
+).replace(
+    '</body>',
+    f'<script>document.querySelector(".bar-hunger").style.width="{hunger_pct_str}%";document.querySelector(".bar-budget").style.width="{budget_pct_str}%";setTimeout(function(){{window.location.href=window.location.href.split("?")[0].replace("foodmind_app8","main2")+"{prefs_hash}";}},3600);</script>\n</body>'
+)
 
 components.html(html_code, height=950, scrolling=False)

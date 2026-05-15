@@ -82,10 +82,8 @@ html_code = """
   .progress-label { font-size: 14px; color: #888; font-weight: 500; }
   .progress-value { font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 700; color: #1a1a1a; }
   #screen-loading .progress-track { width: 100%; height: 8px; background: #f0f0f0; border-radius: 99px; overflow: hidden; }
-  #screen-loading .progress-fill { height: 100%; border-radius: 99px; width: 0%; animation: fillBar 1s ease 2.4s forwards; }
+  #screen-loading .progress-fill { height: 100%; border-radius: 99px; width: 0%; transition: width 1s ease 2.4s; }
   #screen-loading .fill-orange { background: #FF5A1F; } #screen-loading .fill-yellow { background: #F59E0B; }
-  #screen-loading .bar-hunger { --target: 50%; } #screen-loading .bar-budget { --target: 60%; }
-  @keyframes fillBar { to { width: var(--target); } }
 
   /* ================= CSS MÀN HÌNH 2 (RESULT) ================= */
   #screen-result {
@@ -114,6 +112,8 @@ html_code = """
   .food-card { border-radius: 26px; overflow: hidden; position: relative; height: 280px; background: #2a2a2a; }
   .food-card::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 65%; background: linear-gradient(to top, rgba(0,0,0,0.82) 0%, transparent 100%); }
   .match-badge { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.96); border-radius: 16px; padding: 8px 14px; text-align: center; z-index: 2; box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+  .meal-type-badge { position: absolute; top: 16px; left: 16px; padding: 6px 14px; border-radius: 20px; font-family: 'Sora', sans-serif; font-size: 10px; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; color: #fff; z-index: 2; }
+  .mtype-snack { background: #F59E0B; } .mtype-fast-food { background: #EF4444; } .mtype-full-meal { background: #3B82F6; } .mtype-healthy-meal { background: #22C55E; }
   .match-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: #999; text-transform: uppercase; display: block; margin-bottom: 2px; }
   .match-pct { font-family: 'Sora', sans-serif; font-size: 22px; font-weight: 800; color: #FF5A1F; line-height: 1; }
   .food-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 16px 18px; z-index: 2; }
@@ -439,7 +439,7 @@ html_code = """
         <div class="progress-track"><div class="progress-fill fill-orange bar-hunger"></div></div>
       </div>
       <div class="progress-row">
-        <div class="progress-meta"><span class="progress-label">Budget (30k – 50k)</span><span class="progress-value">Hợp lý</span></div>
+        <div class="progress-meta"><span class="progress-label" id="budget-progress-label">Budget (30k – 50k)</span><span class="progress-value" id="budget-progress-value">Hợp lý</span></div>
         <div class="progress-track"><div class="progress-fill fill-yellow bar-budget"></div></div>
       </div>
     </div>
@@ -483,6 +483,7 @@ html_code = """
         <div class="food-card">
           <div style="width:100%;height:100%;background:url('https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?auto=format&fit=crop&w=600&q=80') center/cover;position:relative;">
           </div>
+          <div class="meal-type-badge mtype-full-meal">Full meal</div>
           <div class="match-badge"><span class="match-label">Match</span><span class="match-pct">94%</span></div>
           <div class="food-info">
             <div class="food-meta">
@@ -1835,7 +1836,8 @@ html_code = """
   }
 
   function showRestaurantAsMainCard(name, screenSelector) {
-    const detail = restaurantDetails[name] || restaurantDetails['Cơm Tấm Bà Lan'];
+    const detail = restaurantDetails[name] || restaurantDetails[Object.keys(restaurantDetails)[0]] || {};
+    if (!detail.name) return;
     const screen = document.querySelector(screenSelector || '#screen-result');
     if (!screen) return;
 
@@ -1849,17 +1851,22 @@ html_code = """
     const foodName = screen.querySelector('.food-name');
     const priceBadge = screen.querySelector('.price-badge');
     const firstTag = screen.querySelector('.tags-row .tag:first-child');
+    const mealTypeBadge = screen.querySelector('.meal-type-badge');
     const scrollContent = screen.querySelector('.scroll-content');
 
-    if (imageLayer) {
+    if (imageLayer && detail.image) {
       imageLayer.style.background = detail.image + ' center/cover';
     }
-    if (matchPct) matchPct.textContent = detail.match;
-    if (ratingVal) ratingVal.textContent = detail.rating;
-    if (distance) distance.textContent = detail.distance;
-    if (foodName) foodName.textContent = detail.name;
-    if (priceBadge) priceBadge.textContent = detail.price;
-    if (firstTag) firstTag.textContent = detail.tag;
+    if (matchPct) matchPct.textContent = detail.match || '';
+    if (ratingVal) ratingVal.textContent = detail.rating || '';
+    if (distance) distance.textContent = detail.distance || '';
+    if (foodName) foodName.textContent = detail.name || '';
+    if (priceBadge) priceBadge.textContent = detail.price || '';
+    if (firstTag) firstTag.textContent = detail.tag || '';
+    if (mealTypeBadge && detail.mealType) {
+      mealTypeBadge.textContent = detail.mealType;
+      mealTypeBadge.className = 'meal-type-badge mtype-' + detail.mealType.toLowerCase().replace(/\s+/g, '-');
+    }
     if (scrollContent) scrollContent.scrollTo({ top: 140, behavior: 'smooth' });
     updateFavoriteButton();
   }
@@ -2190,6 +2197,257 @@ html_code = """
       }, 5000);
     });
   }
+
+  window.userPrefs = {
+    budget: '30_50k',
+    time: 'fast',
+    hunger: 3.5,
+    diet: 'Normal',
+    weather: 'Normal',
+    cuisine: 'Việt Nam'
+  };
+
+  const budgetLabels = {
+    'under_30k': 'Dưới 30k',
+    '30_50k': '30k - 50k',
+    '50_100k': '50k - 100k',
+    'over_100k': 'Trên 100k'
+  };
+  const timeLabels = {
+    'express': 'Cực nhanh',
+    'fast': 'Nhanh',
+    'normal': 'Bình thường',
+    'no_rush': 'Không gấp'
+  };
+  const dietLabels = {
+    'Diet': 'Eat clean',
+    'Normal': 'Healthy',
+    'Bulking': 'High protein'
+  };
+  const weatherLabels = {
+    'Rainy': 'Mưa',
+    'Normal': 'Nắng',
+    'Cold': 'Lạnh',
+    'Hot': 'Nóng'
+  };
+  const hungerEmojis = {
+    'Snack': '🥗', 'Slightly_Hungry': '😋', 'Hungry': '🤤', 'Very_Hungry': '😫'
+  };
+
+  function getHungerLabel(val) {
+    val = parseFloat(val) || 3.5;
+    if (val <= 2.5) return 'Ăn nhẹ 🥗';
+    if (val <= 5) return 'Hơi đói 😋';
+    if (val <= 7.5) return 'Đói 🤤';
+    return 'Rất đói 😫';
+  }
+
+  function applyPrefsToUI() {
+    var p = window.userPrefs;
+    var budgetEls = document.querySelectorAll('.needs-item-val');
+    budgetEls.forEach(function(el) {
+      var label = el.parentElement.querySelector('.needs-item-label');
+      if (!label) return;
+      var text = label.textContent.trim().toLowerCase();
+      if (text.includes('budget') || text.includes('ngân sách')) {
+        el.textContent = budgetLabels[p.budget] || p.budget;
+      }
+      if (text.includes('đói') || text.includes('doi')) {
+        el.textContent = getHungerLabel(p.hunger);
+      }
+      if (text.includes('giao') || text.includes('time')) {
+        el.textContent = timeLabels[p.time] ? timeLabels[p.time] + ' ⚡' : p.time;
+      }
+      if (text.includes('tiêu') || text.includes('mục') || text.includes('diet')) {
+        el.textContent = dietLabels[p.diet] ? dietLabels[p.diet] + ' 🥗' : p.diet;
+      }
+      if (text.includes('thực') || text.includes('cuisine')) {
+        el.textContent = (p.cuisine || 'Việt Nam') + ' 🇻🇳';
+      }
+      if (text.includes('weather') || text.includes('thời tiết')) {
+        var w = weatherLabels[p.weather] || p.weather;
+        var wEmoji = p.weather === 'Hot' ? '🔥' : p.weather === 'Cold' ? '🥶' : p.weather === 'Rainy' ? '🌧️' : '☀️';
+        el.textContent = w + ' ' + wEmoji;
+      }
+    });
+  }
+
+  function updateLoadingUI() {
+    var p = window.userPrefs;
+    var hungerVal = parseFloat(p.hunger) || 3.5;
+    var hungerPct = Math.round((hungerVal / 10) * 100);
+    var hungerLabel = getHungerLabel(hungerVal);
+
+    var hl = document.getElementById('hunger-progress-label');
+    var hv = document.getElementById('hunger-progress-value');
+    var hb = document.querySelector('.bar-hunger');
+    if (hl) hl.textContent = 'Độ đói (' + hungerPct + '%)';
+    if (hv) hv.textContent = hungerLabel;
+    if (hb) hb.style.width = hungerPct + '%';
+
+    var budgetLabel = budgetLabels[p.budget] || p.budget;
+    var budgetPcts = { 'under_30k': 18, '30_50k': 40, '50_100k': 70, 'over_100k': 95 };
+    var budgetPct = budgetPcts[p.budget] || 50;
+    var budgetValText = budgetPct > 60 ? 'Cao' : budgetPct > 30 ? 'Hợp lý' : 'Thấp';
+
+    var bl = document.getElementById('budget-progress-label');
+    var bv = document.getElementById('budget-progress-value');
+    var bb = document.querySelector('.bar-budget');
+    if (bl) bl.textContent = 'Budget (' + budgetLabel + ')';
+    if (bv) bv.textContent = budgetValText;
+    if (bb) bb.style.width = budgetPct + '%';
+  }
+
+  function readPrefsFromHash() {
+    var hash = window.location.hash;
+    if (!hash) { updateLoadingUI(); return; }
+    try {
+      var params = new URLSearchParams(hash.replace(/^#/, ''));
+      if (params.get('budget')) window.userPrefs.budget = params.get('budget');
+      if (params.get('time')) window.userPrefs.time = params.get('time');
+      if (params.get('hunger')) window.userPrefs.hunger = parseFloat(params.get('hunger'));
+      if (params.get('diet')) window.userPrefs.diet = params.get('diet');
+      if (params.get('weather')) window.userPrefs.weather = params.get('weather');
+      if (params.get('cuisine')) window.userPrefs.cuisine = params.get('cuisine');
+    } catch(e) {}
+    updateLoadingUI();
+  }
+
+  window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'foodmind-prefs' && event.data.prefs) {
+      var p = event.data.prefs;
+      if (p.budget) window.userPrefs.budget = p.budget;
+      if (p.time) window.userPrefs.time = p.time;
+      if (p.hunger !== undefined) window.userPrefs.hunger = p.hunger;
+      if (p.diet) window.userPrefs.diet = p.diet;
+      if (p.weather) window.userPrefs.weather = p.weather;
+      if (p.cuisine) window.userPrefs.cuisine = p.cuisine;
+      updateLoadingUI();
+      applyPrefsToUI();
+    }
+  });
+
+  var mealTypeGradients = {
+    'Fast food': 'linear-gradient(135deg,#8b1a1a,#6b0f0f)',
+    'Full meal': 'linear-gradient(135deg,#3d2a1a,#6b3d1e)',
+    'Healthy meal': 'linear-gradient(135deg,#2e4a1a,#1a380f)',
+    'Snack': 'linear-gradient(135deg,#8b6508,#5c4305)'
+  };
+
+  function backendResultToDetail(r, index) {
+    var mealType = r.meal_type || 'Full meal';
+    var gradient = mealTypeGradients[mealType] || 'linear-gradient(135deg,#1a3a4a,#0f2a38)';
+    var matchPct = r.match_score.toFixed(0);
+    var rating = '4.0';
+    var distance = '~1.5 km';
+    return {
+      name: r.restaurant_name,
+      title: r.restaurant_name,
+      match: matchPct + '%',
+      matchText: matchPct + '% match',
+      price: Number(r.price).toLocaleString('vi-VN') + 'đ',
+      distance: distance,
+      rating: rating,
+      tag: mealType + ' • ' + matchPct + '% phù hợp',
+      image: 'url(\"data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22390%22 height=%22280%22%3E%3Crect fill=%22%23222%22 width=%22390%22 height=%22280%22/%3E%3Ctext fill=%22%23fff%22 x=%2220%22 y=%22260%22 font-size=%2216%22%3E' + encodeURIComponent(r.restaurant_name) + '%3C/text%3E%3C/svg%3E\")',
+      gradient: gradient,
+      mealType: mealType,
+      backendData: r,
+      dishName: r.dish_name
+    };
+  }
+
+  function buildPeekCardHTML(r, index) {
+    var d = backendResultToDetail(r, index);
+    return '<div class=\"food-card-peek\" data-restaurant=\"' + d.name.replace(/\"/g, '&quot;') + '\" style=\"cursor:pointer;\">' +
+      '<div style=\"position:absolute;inset:0;background:' + d.gradient + ';opacity:0.8;\"></div>' +
+      '<span class=\"peek-name\">' + d.name + '</span>' +
+      '<div style=\"display:flex;flex-direction:column;align-items:flex-end;position:relative;z-index:1;gap:3px;\">' +
+      '<span class=\"peek-price\">' + d.price + '</span>' +
+      '<span class=\"peek-match\">' + d.matchText + '</span>' +
+      '</div></div>';
+  }
+
+  function syncBackendDataToCards() {
+    if (!window.foodmindBackendResults || !window.foodmindBackendResults.length) return;
+
+    var uniqueRestaurants = [];
+    var seen = {};
+    window.foodmindBackendResults.forEach(function(r) {
+      if (!seen[r.restaurant_name]) {
+        seen[r.restaurant_name] = true;
+        uniqueRestaurants.push(r);
+      }
+    });
+
+    uniqueRestaurants.forEach(function(r) {
+      var d = backendResultToDetail(r, 0);
+      restaurantDetails[r.restaurant_name] = d;
+    });
+
+    var top4 = uniqueRestaurants.slice(0, 4);
+    if (top4.length === 0) return;
+
+    ['#screen-result', '#screen-result1'].forEach(function(sel) {
+      var screen = document.querySelector(sel);
+      if (!screen || screen.style.display === 'none') return;
+
+      if (top4.length > 0) {
+        var detail = restaurantDetails[top4[0].restaurant_name];
+        if (detail) {
+          selectedRestaurantName = detail.name;
+          var mainCard = screen.querySelector('.food-card');
+          var matchPct = screen.querySelector('.match-pct');
+          var ratingVal = screen.querySelector('.rating-val');
+          var distance = screen.querySelector('.food-distance');
+          var foodName = screen.querySelector('.food-name');
+          var priceBadge = screen.querySelector('.price-badge');
+          var firstTag = screen.querySelector('.tags-row .tag:first-child');
+          var mealTypeBadge = screen.querySelector('.meal-type-badge');
+
+          if (matchPct) matchPct.textContent = detail.match;
+          if (ratingVal) ratingVal.textContent = detail.rating;
+          if (distance) distance.textContent = detail.distance;
+          if (foodName) foodName.textContent = detail.name;
+          if (priceBadge) priceBadge.textContent = detail.price;
+          if (firstTag) firstTag.textContent = detail.tag;
+          if (mealTypeBadge) {
+            mealTypeBadge.textContent = detail.mealType;
+            mealTypeBadge.className = 'meal-type-badge mtype-' + detail.mealType.toLowerCase().replace(/\s+/g, '-');
+          }
+        }
+      }
+
+      var scrollContent = screen.querySelector('.scroll-content');
+      if (!scrollContent) return;
+      var existingPeeks = scrollContent.querySelectorAll('.food-card-peek');
+      existingPeeks.forEach(function(el) { el.remove(); });
+
+      var tagsRow = scrollContent.querySelector('.tags-row');
+      for (var i = 1; i < top4.length; i++) {
+        var peekHTML = buildPeekCardHTML(top4[i], i);
+        var temp = document.createElement('div');
+        temp.innerHTML = peekHTML;
+        var peekEl = temp.firstChild;
+        if (tagsRow) {
+          tagsRow.parentNode.insertBefore(peekEl, tagsRow);
+        } else {
+          scrollContent.appendChild(peekEl);
+        }
+        (function(restaurantName) {
+          peekEl.addEventListener('click', function() {
+            showRestaurantAsMainCard(restaurantName, sel);
+          });
+        })(top4[i].restaurant_name);
+      }
+    });
+  }
+
+  readPrefsFromHash();
+  setTimeout(function() {
+    syncBackendDataToCards();
+    applyPrefsToUI();
+  }, 4600);
 
 </script>
 </body>
