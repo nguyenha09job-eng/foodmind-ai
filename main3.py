@@ -648,6 +648,17 @@ def prepare_map_css(css_text):
     return map_base_css + "\n" + scope_css(css_text, 'screen-map')
 
 
+def remove_home_top_action_icons(results_html):
+    """Ẩn cụm icon search/bell ở góc phải màn home trong HTML của main2."""
+    hide_top_actions_css = """
+#screen-result .top-actions,
+#screen-result1 .top-actions {
+  display: none !important;
+}
+"""
+    return results_html.replace('</style>', hide_top_actions_css + '\n</style>', 1)
+
+
 def add_map_screen_to_results(results_html, map_style, map_body):
     """Tiêm screen-map vào HTML của main2 và dùng lại switchScreen/bottom-nav sẵn có."""
     map_screen = f"""
@@ -678,6 +689,7 @@ style_budget   = scope_css(style_budget,   'screen-budget')
 style_hunger   = scope_css(style_hunger,   'screen-hunger')
 style_diet     = scope_css(style_diet,     'screen-diet')
 style_app7     = scope_css(style_app7,     'screen-app7')
+html_results   = remove_home_top_action_icons(html_results)
 html_results   = add_map_screen_to_results(html_results, style_map, body_map)
 
 # --- Chèn nội dung vào placeholder ---

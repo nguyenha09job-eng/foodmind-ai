@@ -136,7 +136,9 @@ html_code = """
   .needs-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px 6px; }
   .needs-item-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: #888; text-transform: uppercase; margin-bottom: 4px; }
   .needs-item-val { font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 700; color: #1a1a1a; }
-  .food-card-peek { margin: 0 20px 20px; border-radius: 26px; background: #2a2a2a; height: 80px; overflow: hidden; position: relative; display: flex; align-items: center; padding: 0 18px; justify-content: space-between; }
+  #screen-result .scroll-content > .hero-title,
+  #screen-result1 .scroll-content > .hero-title { font-family: 'Sora', sans-serif; font-size: 36px; font-weight: 800; color: #1a1a1a; line-height: 1.15; letter-spacing: -1.5px; padding: 0 24px; margin-bottom: 28px; }
+  .food-card-peek { margin: 0 20px 20px; border-radius: 26px; background: #2a2a2a; height: 80px; overflow: hidden; position: relative; display: flex; align-items: center; padding: 0 18px; justify-content: space-between; cursor: pointer; }
   .food-card-peek::after { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.55); }
   .peek-name { font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 800; color: #fff; position: relative; z-index: 1; letter-spacing: -0.3px; }
   .peek-price { font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.8); position: relative; z-index: 1; }
@@ -149,7 +151,7 @@ html_code = """
   #screen-detail .scroll-content { padding-bottom: 120px; } /* Ghi đè padding cho riêng màn hình này */
   .hero-header { position: relative; height: 380px; background: #2a2a2a; border-bottom-left-radius: 44px; border-bottom-right-radius: 44px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; padding: 60px 24px 30px; }
   .hero-bg { position: absolute; inset: 0; background: linear-gradient(150deg, #5c3c22 0%, #2a1505 100%); z-index: 0; }
-  .hero-bg::before { content: ''; position: absolute; inset: 0; background: url('https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?auto=format&fit=crop&w=600&q=80') center/cover; opacity: 0.6; mix-blend-mode: overlay; }  .hero-bg::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 70%; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%); }
+  .hero-bg::before { content: ''; position: absolute; inset: 0; background: var(--hero-image, url('https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?auto=format&fit=crop&w=600&q=80')) center/cover; opacity: 0.6; mix-blend-mode: overlay; }  .hero-bg::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 70%; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%); }
   .top-nav { position: relative; z-index: 10; display: flex; justify-content: space-between; align-items: center; }
   .circle-btn { width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.25); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); }
   .hero-content { position: relative; z-index: 10; }
@@ -1247,12 +1249,134 @@ html_code = """
   // 3. LOGIC LUỒNG ĐI CÁC MÀN HÌNH
   // ==========================================
   
-  // Từ Result -> Detail
-  const mainFoodCard = document.querySelector('#screen-result .food-card');
-  if (mainFoodCard) {
-    mainFoodCard.style.cursor = 'pointer';
-    mainFoodCard.addEventListener('click', () => switchScreen('screen-detail'));
+  const restaurantDetails = {
+    'Cơm Tấm Bà Lan': {
+      name: 'Cơm Tấm Bà Lan',
+      title: 'Cơm Tấm Bà<br>Lan',
+      match: '94%',
+      matchText: '94% match',
+      price: '45k – 65k',
+      distance: '1.2 km • 15–20 ph',
+      rating: '4.8',
+      tag: 'PHÙ HỢP 94% VỚI NHU CẦU',
+      image: "url('https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?auto=format&fit=crop&w=600&q=80')"
+    },
+    'Bún Bò Huế Chu': {
+      name: 'Bún Bò Huế Chu',
+      title: 'Bún Bò Huế<br>Chu',
+      match: '87%',
+      matchText: '87% match',
+      price: '50k – 70k',
+      distance: '1.5 km • 18–25 ph',
+      rating: '4.7',
+      tag: 'PHÙ HỢP 87% VỚI NHU CẦU',
+      image: "url('https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?auto=format&fit=crop&w=600&q=80')"
+    },
+    'Bún Bò Huế Chú Hải': {
+      name: 'Bún Bò Huế Chú Hải',
+      title: 'Bún Bò Huế<br>Chú Hải',
+      match: '87%',
+      matchText: '87% match',
+      price: '50k – 70k',
+      distance: '1.5 km • 18–25 ph',
+      rating: '4.7',
+      tag: 'PHÙ HỢP 87% VỚI NHU CẦU',
+      image: "url('https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?auto=format&fit=crop&w=600&q=80')"
+    },
+    'Phở Bò Hà Nội': {
+      name: 'Phở Bò Hà Nội',
+      title: 'Phở Bò<br>Hà Nội',
+      match: '82%',
+      matchText: '82% match',
+      price: '45k – 60k',
+      distance: '1.8 km • 20–25 ph',
+      rating: '4.6',
+      tag: 'PHÙ HỢP 82% VỚI NHU CẦU',
+      image: "url('https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?auto=format&fit=crop&w=600&q=80')"
+    },
+    'Salad Healthy Xanh': {
+      name: 'Salad Healthy Xanh',
+      title: 'Salad Healthy<br>Xanh',
+      match: '78%',
+      matchText: '78% match',
+      price: '60k – 85k',
+      distance: '2.0 km • 22–30 ph',
+      rating: '4.5',
+      tag: 'PHÙ HỢP 78% VỚI NHU CẦU',
+      image: "url('https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=600&q=80')"
+    },
+    'Gà Rán Jollibee': {
+      name: 'Gà Rán Jollibee',
+      title: 'Gà Rán<br>Jollibee',
+      match: '75%',
+      matchText: '75% match',
+      price: '40k – 90k',
+      distance: '1.6 km • 18–25 ph',
+      rating: '4.4',
+      tag: 'PHÙ HỢP 75% VỚI NHU CẦU',
+      image: "url('https://images.unsplash.com/photo-1562967916-eb82221dfb36?auto=format&fit=crop&w=600&q=80')"
+    }
+  };
+
+  let selectedRestaurantName = 'Cơm Tấm Bà Lan';
+
+  function openRestaurantDetail(name) {
+    const detail = restaurantDetails[name] || restaurantDetails['Cơm Tấm Bà Lan'];
+    const detailTitle = document.querySelector('#screen-detail .hero-title');
+    const detailMatch = document.querySelector('#screen-detail .match-box-val');
+    const detailBg = document.querySelector('#screen-detail .hero-bg');
+
+    if (detailTitle) detailTitle.innerHTML = detail.title;
+    if (detailMatch) detailMatch.textContent = detail.match;
+    if (detailBg) detailBg.style.setProperty('--hero-image', detail.image);
+
+    switchScreen('screen-detail');
   }
+
+  function showRestaurantAsMainCard(name, screenSelector) {
+    const detail = restaurantDetails[name] || restaurantDetails['Cơm Tấm Bà Lan'];
+    const screen = document.querySelector(screenSelector || '#screen-result');
+    if (!screen) return;
+
+    selectedRestaurantName = detail.name;
+
+    const mainCard = screen.querySelector('.food-card');
+    const imageLayer = mainCard ? mainCard.querySelector(':scope > div:first-child') : null;
+    const matchPct = screen.querySelector('.match-pct');
+    const ratingVal = screen.querySelector('.rating-val');
+    const distance = screen.querySelector('.food-distance');
+    const foodName = screen.querySelector('.food-name');
+    const priceBadge = screen.querySelector('.price-badge');
+    const firstTag = screen.querySelector('.tags-row .tag:first-child');
+    const scrollContent = screen.querySelector('.scroll-content');
+
+    if (imageLayer) {
+      imageLayer.style.background = detail.image + ' center/cover';
+    }
+    if (matchPct) matchPct.textContent = detail.match;
+    if (ratingVal) ratingVal.textContent = detail.rating;
+    if (distance) distance.textContent = detail.distance;
+    if (foodName) foodName.textContent = detail.name;
+    if (priceBadge) priceBadge.textContent = detail.price;
+    if (firstTag) firstTag.textContent = detail.tag;
+    if (scrollContent) scrollContent.scrollTo({ top: 140, behavior: 'smooth' });
+  }
+
+  // Từ Result -> Detail
+  const mainFoodCards = document.querySelectorAll('#screen-result .food-card, #screen-result1 .food-card');
+  mainFoodCards.forEach(card => {
+    card.style.cursor = 'pointer';
+    card.addEventListener('click', () => openRestaurantDetail(selectedRestaurantName));
+  });
+
+  const restaurantPeekCards = document.querySelectorAll('#screen-result .food-card-peek, #screen-result1 .food-card-peek');
+  restaurantPeekCards.forEach(card => {
+    card.addEventListener('click', () => {
+      const nameEl = card.querySelector('.peek-name');
+      const screen = card.closest('#screen-result, #screen-result1');
+      if (nameEl && screen) showRestaurantAsMainCard(nameEl.textContent.trim(), '#' + screen.id);
+    });
+  });
 
   // Back từ Detail -> Result
   const backBtn = document.querySelector('#screen-detail .circle-btn'); 
