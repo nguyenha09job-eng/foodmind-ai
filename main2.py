@@ -186,12 +186,31 @@ html_code = """
   .add-btn { width: 40px; height: 40px; border-radius: 14px; background: #1a1a1a; color: #fff; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; }
   .floating-order-box { position: absolute; bottom: 30px; left: 24px; right: 24px; z-index: 50; }
   .quick-cart-bar { width: 100%; background: #1a1a1a; color: #fff; border-radius: 24px; padding: 12px 14px; display: flex; align-items: center; gap: 14px; box-shadow: 0 12px 28px rgba(0,0,0,0.22); }
-  .cart-icon-wrap { width: 46px; height: 46px; border-radius: 16px; background: rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; }
+  .cart-icon-wrap { width: 46px; height: 46px; border-radius: 16px; background: rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; cursor: pointer; transition: transform 0.2s, background 0.2s; border: none; color: #fff; }
+  .cart-icon-wrap:active { transform: scale(0.94); }
+  .cart-icon-wrap.is-active { background: rgba(255,90,31,0.34); }
   .cart-count { position: absolute; top: -5px; right: -5px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: #FF5A1F; color: #fff; font-family: 'Sora', sans-serif; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; border: 2px solid #1a1a1a; }
   .cart-summary { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
   .cart-label { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.6); }
   .cart-total { font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 800; color: #fff; }
   .order-now-btn { border: none; background: #FF5A1F; color: #fff; border-radius: 18px; padding: 14px 18px; font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 800; cursor: pointer; box-shadow: 0 8px 20px rgba(255, 90, 31, 0.35); transition: transform 0.2s; white-space: nowrap; }
+  .cart-panel { display: none; position: absolute; left: 0; right: 0; bottom: 82px; background: #fff; color: #1a1a1a; border: 1px solid #f0ede8; border-radius: 24px; padding: 16px; box-shadow: 0 18px 38px rgba(0,0,0,0.18); max-height: 315px; overflow: hidden; }
+  .cart-panel.is-open { display: block; animation: cartPanelIn 0.22s ease forwards; }
+  @keyframes cartPanelIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .cart-panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .cart-panel-title { font-family: 'Sora', sans-serif; font-size: 16px; font-weight: 800; color: #1a1a1a; }
+  .cart-panel-close { width: 32px; height: 32px; border-radius: 12px; border: none; background: #f5f3ef; color: #555; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .cart-items { display: flex; flex-direction: column; gap: 10px; max-height: 218px; overflow-y: auto; padding-right: 2px; scrollbar-width: none; }
+  .cart-items::-webkit-scrollbar { display: none; }
+  .cart-empty { background: #fafaf8; border-radius: 18px; padding: 18px; text-align: center; color: #888; font-size: 13px; font-weight: 700; }
+  .cart-item { display: flex; align-items: center; gap: 12px; background: #fafaf8; border-radius: 18px; padding: 12px; }
+  .cart-item-info { flex: 1; min-width: 0; }
+  .cart-item-name { font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 800; color: #1a1a1a; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cart-item-price { margin-top: 4px; font-size: 12px; color: #888; font-weight: 700; }
+  .qty-control { display: flex; align-items: center; gap: 7px; background: #fff; border: 1px solid #eee9e2; border-radius: 14px; padding: 4px; }
+  .qty-btn { width: 26px; height: 26px; border-radius: 10px; border: none; background: #1a1a1a; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; font-family: 'Sora', sans-serif; font-weight: 800; }
+  .qty-val { min-width: 18px; text-align: center; font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 800; color: #1a1a1a; }
+  .remove-cart-item { width: 32px; height: 32px; border-radius: 12px; border: none; background: #fff0eb; color: #FF5A1F; display: flex; align-items: center; justify-content: center; cursor: pointer; }
   .order-now-btn:active { transform: scale(0.96); }
   .btn-primary { width: 100%; background: #FF5A1F; color: #fff; border: none; border-radius: 24px; padding: 18px 24px; font-family: 'Sora', sans-serif; font-size: 16px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; cursor: pointer; box-shadow: 0 8px 24px rgba(255, 90, 31, 0.35); transition: transform 0.2s; }
   .btn-primary:active { transform: scale(0.98); }
@@ -274,10 +293,11 @@ html_code = """
   #screen-mealplan .nutrient-name { font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 800; color: #1a1a1a; }
   #screen-mealplan .nutrient-val { font-size: 13px; font-weight: 700; color: #999; }
   #screen-mealplan .progress-bg { width: 100%; height: 8px; background: #f0ede8; border-radius: 10px; overflow: hidden; }
-  #screen-mealplan .progress-fill { height: 100%; border-radius: 10px; }
-  #screen-mealplan .fill-orange { background: #FF5A1F; width: 76%; }
-  #screen-mealplan .fill-blue { background: #2962FF; width: 68%; }
-  #screen-mealplan .fill-green { background: #00C853; width: 60%; }
+  #screen-mealplan .progress-fill { height: 100%; border-radius: 10px; width: 0%; transition: width 0.65s cubic-bezier(0.22, 0.61, 0.36, 1); }
+  #screen-mealplan .fill-orange { background: #FF5A1F; }
+  #screen-mealplan .fill-blue { background: #2962FF; }
+  #screen-mealplan .fill-green { background: #00C853; }
+  #screen-mealplan .mealplan-cart-box { display: none; bottom: 86px; }
   #screen-discover { background: #fdfdfc; z-index: 50; padding-bottom: 0; }
   #screen-discover .scroll-content { padding-top: 70px; padding-bottom: 120px; }
   #screen-discover .header-section { padding: 10px 24px 20px; }
@@ -865,15 +885,29 @@ html_code = """
 
   <!-- Cố định nút ở dưới cùng màn hình -->
   <div class="floating-order-box">
+    <div class="cart-panel" id="detail-cart-panel">
+      <div class="cart-panel-head">
+        <div class="cart-panel-title">Giỏ hàng của bạn</div>
+        <button class="cart-panel-close" aria-label="Đóng giỏ hàng">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="cart-items">
+        <div class="cart-empty">Chưa có món nào trong giỏ</div>
+      </div>
+    </div>
     <div class="quick-cart-bar">
-      <div class="cart-icon-wrap">
+      <button class="cart-icon-wrap" type="button" aria-label="Mở giỏ hàng">
         <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="9" cy="21" r="1"></circle>
           <circle cx="20" cy="21" r="1"></circle>
           <path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h8.7a2 2 0 0 0 2-1.6L23 6H6"></path>
         </svg>
         <span class="cart-count">0</span>
-      </div>
+      </button>
       <div class="cart-summary">
         <span class="cart-label">Tổng cộng</span>
         <span class="cart-total">0 đ</span>
@@ -1016,7 +1050,7 @@ html_code = """
     </div>
 
     <div class="meal-list">
-      <div class="meal-card breakfast">
+      <div class="meal-card breakfast" data-meal-id="breakfast">
         <div class="meal-info">
           <div class="meal-time">07:30 • BỮA SÁNG</div>
           <div class="meal-name">Bánh mì ốp la</div>
@@ -1027,14 +1061,10 @@ html_code = """
             450 kcal
           </div>
         </div>
-        <div class="check-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="20 6 9 17 4 12"></polyline>
-          </svg>
-        </div>
+        <button class="btn-order" data-meal-id="breakfast">Đặt ngay</button>
       </div>
 
-      <div class="meal-card lunch">
+      <div class="meal-card lunch" data-meal-id="lunch">
         <div class="meal-info">
           <div class="meal-time">12:15 • BỮA TRƯA</div>
           <div class="meal-name">Cơm tấm sườn bì</div>
@@ -1045,10 +1075,10 @@ html_code = """
             450 kcal
           </div>
         </div>
-        <button class="btn-order btn-order-lunch">Đặt món</button>
+        <button class="btn-order btn-order-lunch" data-meal-id="lunch">Đặt ngay</button>
       </div>
 
-      <div class="meal-card dinner">
+      <div class="meal-card dinner" data-meal-id="dinner">
         <div class="meal-info">
           <div class="meal-time">18:30 • BỮA TỐI</div>
           <div class="meal-name">Salad ức gà</div>
@@ -1059,7 +1089,7 @@ html_code = """
             450 kcal
           </div>
         </div>
-        <button class="btn-order btn-order-dinner">Đặt món</button>
+        <button class="btn-order btn-order-dinner" data-meal-id="dinner">Đặt ngay</button>
       </div>
     </div>
 
@@ -1076,7 +1106,7 @@ html_code = """
       <div class="nutrient-item">
         <div class="nutrient-labels">
           <span class="nutrient-name">Calories</span>
-          <span class="nutrient-val">1380 / 1800 kcal</span>
+          <span class="nutrient-val" data-nutrient="calories">0 / 1800 kcal</span>
         </div>
         <div class="progress-bg"><div class="progress-fill fill-orange"></div></div>
       </div>
@@ -1084,7 +1114,7 @@ html_code = """
       <div class="nutrient-item">
         <div class="nutrient-labels">
           <span class="nutrient-name">Protein</span>
-          <span class="nutrient-val">82 / 120g</span>
+          <span class="nutrient-val" data-nutrient="protein">0 / 120g</span>
         </div>
         <div class="progress-bg"><div class="progress-fill fill-blue"></div></div>
       </div>
@@ -1092,13 +1122,31 @@ html_code = """
       <div class="nutrient-item">
         <div class="nutrient-labels">
           <span class="nutrient-name">Carbs</span>
-          <span class="nutrient-val">150 / 250g</span>
+          <span class="nutrient-val" data-nutrient="carbs">0 / 250g</span>
         </div>
         <div class="progress-bg"><div class="progress-fill fill-green"></div></div>
       </div>
 
     </div>
 
+  </div>
+
+  <div class="floating-order-box mealplan-cart-box">
+    <div class="quick-cart-bar">
+      <div class="cart-icon-wrap">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="21" r="1"></circle>
+          <circle cx="20" cy="21" r="1"></circle>
+          <path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h8.7a2 2 0 0 0 2-1.6L23 6H6"></path>
+        </svg>
+        <span class="cart-count">1</span>
+      </div>
+      <div class="cart-summary">
+        <span class="cart-label">Tổng cộng</span>
+        <span class="cart-total">0 đ</span>
+      </div>
+      <button class="order-now-btn">Đặt ngay</button>
+    </div>
   </div>
 
   <div class="bottom-nav">
@@ -1438,8 +1486,18 @@ html_code = """
 
   let selectedRestaurantName = 'Cơm Tấm Bà Lan';
   let detailReturnScreen = 'screen-result';
-  let cartCount = 0;
-  let cartTotal = 0;
+  let cartItems = [];
+  let cartPanelOpen = false;
+  let activeOrderContext = 'detail';
+  let pendingMealId = null;
+  let selectedMealId = null;
+  const mealPlanNutrition = { calories: 0, protein: 0, carbs: 0 };
+  const orderedMealIds = new Set();
+  const mealPlanMeals = {
+    breakfast: { name: 'Bánh mì ốp la', price: 35000, calories: 450, protein: 18, carbs: 48 },
+    lunch: { name: 'Cơm tấm sườn bì', price: 55000, calories: 650, protein: 38, carbs: 78 },
+    dinner: { name: 'Salad ức gà', price: 60000, calories: 420, protein: 42, carbs: 28 }
+  };
 
   function getCurrentScreenId() {
     const visibleScreen = document.querySelector('.screen-wrapper[style*="display: flex"]');
@@ -1466,22 +1524,172 @@ html_code = """
     return amount.toLocaleString('vi-VN') + ' đ';
   }
 
+  function escapeHtml(value) {
+    return String(value || '').replace(/[&<>"']/g, char => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    })[char]);
+  }
+
+  function getCartTotals() {
+    return cartItems.reduce((totals, item) => {
+      totals.count += item.quantity;
+      totals.amount += item.price * item.quantity;
+      return totals;
+    }, { count: 0, amount: 0 });
+  }
+
   function updateQuickCart() {
     const countEl = document.querySelector('#screen-detail .cart-count');
     const totalEl = document.querySelector('#screen-detail .cart-total');
-    if (countEl) countEl.textContent = cartCount;
-    if (totalEl) totalEl.textContent = formatVnd(cartTotal);
+    const cartIcon = document.querySelector('#screen-detail .cart-icon-wrap');
+    const cartPanel = document.getElementById('detail-cart-panel');
+    const cartItemsEl = document.querySelector('#screen-detail .cart-items');
+    const orderBtn = document.querySelector('#screen-detail .order-now-btn');
+    const totals = getCartTotals();
+
+    if (countEl) countEl.textContent = totals.count;
+    if (totalEl) totalEl.textContent = formatVnd(totals.amount);
+    if (orderBtn) orderBtn.disabled = totals.count === 0;
+    if (cartIcon) {
+      cartIcon.classList.toggle('is-active', cartPanelOpen);
+      cartIcon.setAttribute('aria-expanded', cartPanelOpen ? 'true' : 'false');
+    }
+    if (cartPanel) cartPanel.classList.toggle('is-open', cartPanelOpen);
+    if (!cartItemsEl) return;
+
+    if (!cartItems.length) {
+      cartItemsEl.innerHTML = '<div class="cart-empty">Chưa có món nào trong giỏ</div>';
+      return;
+    }
+
+    cartItemsEl.innerHTML = cartItems.map(item => `
+      <div class="cart-item" data-cart-id="${escapeHtml(item.id)}">
+        <div class="cart-item-info">
+          <div class="cart-item-name">${escapeHtml(item.name)}</div>
+          <div class="cart-item-price">${formatVnd(item.price)}</div>
+        </div>
+        <div class="qty-control" aria-label="Chỉnh số lượng ${escapeHtml(item.name)}">
+          <button class="qty-btn cart-qty-minus" type="button" aria-label="Giảm số lượng">−</button>
+          <span class="qty-val">${item.quantity}</span>
+          <button class="qty-btn cart-qty-plus" type="button" aria-label="Tăng số lượng">+</button>
+        </div>
+        <button class="remove-cart-item" type="button" aria-label="Xoá ${escapeHtml(item.name)}">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+          </svg>
+        </button>
+      </div>
+    `).join('');
   }
 
   function resetQuickCart() {
-    cartCount = 0;
-    cartTotal = 0;
+    cartItems = [];
+    cartPanelOpen = false;
+    updateQuickCart();
+  }
+
+  function addMenuItemToCart(menuItem) {
+    if (!menuItem) return;
+    const name = menuItem.querySelector('.menu-name')?.textContent?.trim() || 'Món ăn';
+    const price = parseMenuPrice(menuItem.querySelector('.menu-price')?.textContent);
+    const id = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-');
+    const existingItem = cartItems.find(item => item.id === id);
+
+    if (existingItem) {
+      existingItem.quantity += 1;
+    } else {
+      cartItems.push({ id, name, price, quantity: 1 });
+    }
+    updateQuickCart();
+  }
+
+  function changeCartItemQuantity(itemId, delta) {
+    const item = cartItems.find(cartItem => cartItem.id === itemId);
+    if (!item) return;
+
+    item.quantity += delta;
+    if (item.quantity <= 0) {
+      cartItems = cartItems.filter(cartItem => cartItem.id !== itemId);
+    }
+    if (!cartItems.length) cartPanelOpen = false;
+    updateQuickCart();
+  }
+
+  function removeCartItem(itemId) {
+    cartItems = cartItems.filter(item => item.id !== itemId);
+    if (!cartItems.length) cartPanelOpen = false;
     updateQuickCart();
   }
 
   function parseMenuPrice(priceText) {
     const digits = (priceText || '').replace(/[^0-9]/g, '');
     return digits ? Number(digits) : 0;
+  }
+
+  function updateMealPlanCart(mealId) {
+    const meal = mealPlanMeals[mealId];
+    const cartBox = document.querySelector('#screen-mealplan .mealplan-cart-box');
+    if (!cartBox || !meal) return;
+
+    cartBox.style.display = 'block';
+    const countEl = cartBox.querySelector('.cart-count');
+    const totalEl = cartBox.querySelector('.cart-total');
+    if (countEl) countEl.textContent = '1';
+    if (totalEl) totalEl.textContent = formatVnd(meal.price);
+  }
+
+  function hideMealPlanCart() {
+    const cartBox = document.querySelector('#screen-mealplan .mealplan-cart-box');
+    if (cartBox) cartBox.style.display = 'none';
+    selectedMealId = null;
+  }
+
+  function renderMealPlanNutrition() {
+    const calorieVal = document.querySelector('#screen-mealplan [data-nutrient="calories"]');
+    const proteinVal = document.querySelector('#screen-mealplan [data-nutrient="protein"]');
+    const carbsVal = document.querySelector('#screen-mealplan [data-nutrient="carbs"]');
+    const calorieFill = document.querySelector('#screen-mealplan .fill-orange');
+    const proteinFill = document.querySelector('#screen-mealplan .fill-blue');
+    const carbsFill = document.querySelector('#screen-mealplan .fill-green');
+
+    if (calorieVal) calorieVal.textContent = mealPlanNutrition.calories + ' / 1800 kcal';
+    if (proteinVal) proteinVal.textContent = mealPlanNutrition.protein + ' / 120g';
+    if (carbsVal) carbsVal.textContent = mealPlanNutrition.carbs + ' / 250g';
+    if (calorieFill) calorieFill.style.width = Math.min(100, mealPlanNutrition.calories / 1800 * 100) + '%';
+    if (proteinFill) proteinFill.style.width = Math.min(100, mealPlanNutrition.protein / 120 * 100) + '%';
+    if (carbsFill) carbsFill.style.width = Math.min(100, mealPlanNutrition.carbs / 250 * 100) + '%';
+  }
+
+  function markMealPlanOrdered(mealId) {
+    const meal = mealPlanMeals[mealId];
+    if (!meal || orderedMealIds.has(mealId)) return;
+
+    orderedMealIds.add(mealId);
+    mealPlanNutrition.calories += meal.calories;
+    mealPlanNutrition.protein += meal.protein;
+    mealPlanNutrition.carbs += meal.carbs;
+    renderMealPlanNutrition();
+
+    const mealCard = document.querySelector('#screen-mealplan .meal-card[data-meal-id="' + mealId + '"]');
+    const oldAction = mealCard ? mealCard.querySelector('.btn-order') : null;
+    if (oldAction) {
+      oldAction.outerHTML = '<div class="check-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>';
+    }
+  }
+
+  function completeCurrentOrder() {
+    if (activeOrderContext === 'mealplan' && pendingMealId) {
+      markMealPlanOrdered(pendingMealId);
+      hideMealPlanCart();
+      pendingMealId = null;
+      activeOrderContext = 'detail';
+    }
   }
 
   function showRestaurantAsMainCard(name, screenSelector) {
@@ -1655,8 +1863,7 @@ html_code = """
   const homeBtn = document.querySelector('#screen-success .btn-home');
   if (homeBtn) {
     homeBtn.addEventListener('click', () => {
-      switchScreen('screen-loading');
-      setTimeout(() => switchScreen('screen-result'), 4500); 
+      switchScreen('screen-result');
     });
   }
 
@@ -1666,13 +1873,44 @@ html_code = """
   document.querySelectorAll('#screen-detail .add-btn').forEach(addBtn => {
     addBtn.addEventListener('click', event => {
       event.stopPropagation();
-      const menuItem = addBtn.closest('.menu-item');
-      const price = parseMenuPrice(menuItem?.querySelector('.menu-price')?.textContent);
-      cartCount += 1;
-      cartTotal += price;
-      updateQuickCart();
+      addMenuItemToCart(addBtn.closest('.menu-item'));
     });
   });
+
+  const detailCartIcon = document.querySelector('#screen-detail .cart-icon-wrap');
+  if (detailCartIcon) {
+    detailCartIcon.addEventListener('click', event => {
+      event.stopPropagation();
+      cartPanelOpen = !cartPanelOpen;
+      updateQuickCart();
+    });
+  }
+
+  const detailCartClose = document.querySelector('#screen-detail .cart-panel-close');
+  if (detailCartClose) {
+    detailCartClose.addEventListener('click', event => {
+      event.stopPropagation();
+      cartPanelOpen = false;
+      updateQuickCart();
+    });
+  }
+
+  const detailCartPanel = document.getElementById('detail-cart-panel');
+  if (detailCartPanel) {
+    detailCartPanel.addEventListener('click', event => {
+      event.stopPropagation();
+      const cartItem = event.target.closest('.cart-item');
+      if (!cartItem) return;
+
+      if (event.target.closest('.cart-qty-plus')) {
+        changeCartItemQuantity(cartItem.dataset.cartId, 1);
+      } else if (event.target.closest('.cart-qty-minus')) {
+        changeCartItemQuantity(cartItem.dataset.cartId, -1);
+      } else if (event.target.closest('.remove-cart-item')) {
+        removeCartItem(cartItem.dataset.cartId);
+      }
+    });
+  }
 
   const oldOrderBtn = document.querySelector('#screen-detail .order-now-btn');
   if (oldOrderBtn) {
@@ -1681,10 +1919,15 @@ html_code = """
     oldOrderBtn.parentNode.replaceChild(newOrderBtn, oldOrderBtn);
     
     newOrderBtn.addEventListener('click', () => {
+      if (!cartItems.length) return;
+      cartPanelOpen = false;
+      updateQuickCart();
+      activeOrderContext = 'detail';
       switchScreen('screen-tracking');
       // Sau 5s tự nhảy sang báo thành công
       setTimeout(() => {
         if(document.getElementById('screen-tracking').style.display === 'flex') {
+          completeCurrentOrder();
           switchScreen('screen-success');
         }
       }, 5000);
@@ -1693,13 +1936,16 @@ html_code = """
 
   const backTracking = document.getElementById('btn-back-tracking');
   if (backTracking) {
-    backTracking.addEventListener('click', () => switchScreen('screen-detail'));
+    backTracking.addEventListener('click', () => switchScreen(activeOrderContext === 'mealplan' ? 'screen-mealplan' : 'screen-detail'));
   }
 
   const shipperMarker = document.getElementById('shipper-btn');
   if (shipperMarker) {
     shipperMarker.style.cursor = 'pointer';
-    shipperMarker.addEventListener('click', () => switchScreen('screen-success'));
+    shipperMarker.addEventListener('click', () => {
+      completeCurrentOrder();
+      switchScreen('screen-success');
+    });
   }
 
   // ==========================================
@@ -1721,8 +1967,29 @@ html_code = """
   
   // Nút đặt món bên Meal Plan
   document.querySelectorAll('#screen-mealplan .btn-order').forEach(orderBtn => {
-    orderBtn.addEventListener('click', () => switchScreen('screen-detail'));
+    orderBtn.addEventListener('click', () => {
+      const mealId = orderBtn.dataset.mealId;
+      if (!mealId || orderedMealIds.has(mealId)) return;
+      selectedMealId = mealId;
+      updateMealPlanCart(mealId);
+    });
   });
+
+  const mealPlanOrderBtn = document.querySelector('#screen-mealplan .mealplan-cart-box .order-now-btn');
+  if (mealPlanOrderBtn) {
+    mealPlanOrderBtn.addEventListener('click', () => {
+      if (!selectedMealId) return;
+      pendingMealId = selectedMealId;
+      activeOrderContext = 'mealplan';
+      switchScreen('screen-tracking');
+      setTimeout(() => {
+        if(document.getElementById('screen-tracking').style.display === 'flex' && activeOrderContext === 'mealplan') {
+          completeCurrentOrder();
+          switchScreen('screen-success');
+        }
+      }, 5000);
+    });
+  }
 
 </script>
 </body>
