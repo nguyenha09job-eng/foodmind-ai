@@ -668,6 +668,13 @@ def prepare_map_css(css_text):
 #screen-map .nav-item {
   position: relative;
 }
+#screen-map .bottom-sheet .view-all,
+#screen-map .bottom-sheet .match-badge {
+  display: none !important;
+}
+#screen-map .search-area .filter-btn {
+  display: none !important;
+}
 """
     return map_base_css + "\n" + scope_css(css_text, 'screen-map')
 
