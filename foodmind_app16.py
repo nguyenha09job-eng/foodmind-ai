@@ -76,7 +76,8 @@ body {
   top: 64px; left: 20px; right: 20px;
   display: flex;
   gap: 12px;
-  z-index: 10;
+  z-index: 60;
+  pointer-events: auto;
 }
 
 .search-box {
@@ -87,6 +88,7 @@ body {
   display: flex;
   align-items: center;
   box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+  pointer-events: auto;
 }
 
 .search-input {
@@ -100,6 +102,7 @@ body {
   padding: 18px 0;
   margin-left: 12px;
   background: transparent;
+  pointer-events: auto;
 }
 
 .search-input::placeholder { color: #aaa; }
@@ -376,7 +379,7 @@ body {
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
       </svg>
-      <input type="text" class="search-input" placeholder="Tìm kiếm quán gần đây...">
+      <input type="text" class="search-input" placeholder="Tìm kiếm quán gần đây..." oninput="window.filterMapRestaurants && window.filterMapRestaurants()">
     </div>
     <div class="filter-btn">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

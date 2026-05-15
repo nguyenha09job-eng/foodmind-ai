@@ -80,10 +80,10 @@ html_code = """
   .progress-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
   .progress-label { font-size: 14px; color: #888; font-weight: 500; }
   .progress-value { font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 700; color: #1a1a1a; }
-  .progress-track { width: 100%; height: 8px; background: #f0f0f0; border-radius: 99px; overflow: hidden; }
-  .progress-fill { height: 100%; border-radius: 99px; width: 0%; animation: fillBar 1s ease 2.4s forwards; }
-  .fill-orange { background: #FF5A1F; } .fill-yellow { background: #F59E0B; }
-  .bar-hunger { --target: 50%; } .bar-budget { --target: 60%; }
+  #screen-loading .progress-track { width: 100%; height: 8px; background: #f0f0f0; border-radius: 99px; overflow: hidden; }
+  #screen-loading .progress-fill { height: 100%; border-radius: 99px; width: 0%; animation: fillBar 1s ease 2.4s forwards; }
+  #screen-loading .fill-orange { background: #FF5A1F; } #screen-loading .fill-yellow { background: #F59E0B; }
+  #screen-loading .bar-hunger { --target: 50%; } #screen-loading .bar-budget { --target: 60%; }
   @keyframes fillBar { to { width: var(--target); } }
 
   /* ================= CSS MÀN HÌNH 2 (RESULT) ================= */
@@ -148,7 +148,7 @@ html_code = """
   .nav-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; position: relative; }
   .nav-dot { position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; background: #FF5A1F; border-radius: 50%; }
   /* BẮT ĐẦU COPY CSS SCREEN-DETAIL */
-  #screen-detail .scroll-content { padding-bottom: 120px; } /* Ghi đè padding cho riêng màn hình này */
+  #screen-detail .scroll-content { padding: 0 0 120px; } /* Hero quán ăn lấp đầy từ mép trên */
   .hero-header { position: relative; height: 380px; background: #2a2a2a; border-bottom-left-radius: 44px; border-bottom-right-radius: 44px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; padding: 60px 24px 30px; }
   .hero-bg { position: absolute; inset: 0; background: linear-gradient(150deg, #5c3c22 0%, #2a1505 100%); z-index: 0; }
   .hero-bg::before { content: ''; position: absolute; inset: 0; background: var(--hero-image, url('https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?auto=format&fit=crop&w=600&q=80')) center/cover; opacity: 0.6; mix-blend-mode: overlay; }  .hero-bg::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 70%; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%); }
@@ -1106,7 +1106,7 @@ html_code = """
     </div>
 
     <div class="trending-horizontal-scroll">
-      <div class="trend-card">
+      <div class="trend-card" data-restaurant="Healthy Bowl">
         <div class="trend-img-wrap">
           <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80" alt="Healthy Bowl" class="trend-img">
           <div class="rating-badge"><span style="color:#FFD600">★</span> 4.9</div>
@@ -1116,7 +1116,7 @@ html_code = """
           <div class="trend-loc"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> Quận 1</div>
         </div>
       </div>
-      <div class="trend-card">
+      <div class="trend-card" data-restaurant="Sushi Haru">
         <div class="trend-img-wrap">
         <img src="https://images.unsplash.com/photo-1553621042-f6e147245754?auto=format&fit=crop&w=300&q=80" alt="Sushi Haru" class="trend-img">        </div>
         <div class="trend-info">
@@ -1124,7 +1124,7 @@ html_code = """
           <div class="trend-loc"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> Quận 3</div>
         </div>
       </div>
-      <div class="trend-card">
+      <div class="trend-card" data-restaurant="Pizza Ngon">
         <div class="trend-img-wrap">
           <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=300&q=80" alt="Pizza" class="trend-img">
           <div class="rating-badge"><span style="color:#FFD600">★</span> 4.7</div>
@@ -1144,7 +1144,7 @@ html_code = """
     </div>
 
     <div class="recent-list">
-      <div class="recent-item">
+      <div class="recent-item" data-restaurant="Quán Ngon Sài Gòn">
         <img src="https://images.unsplash.com/photo-1555126634-323283e090fa?auto=format&fit=crop&w=150&q=80" alt="Quán Ngon" class="recent-img">
         <div class="recent-info">
           <div class="recent-name">Quán Ngon Sài Gòn</div>
@@ -1153,14 +1153,14 @@ html_code = """
         <svg class="chevron-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
       </div>
       <!-- ID ĐƯỢC GẮN VÀO ĐÂY ĐỂ BẤM CHUYỂN TRANG -->
-      <div class="recent-item" id="btn-recent-comtam">
+      <div class="recent-item" id="btn-recent-comtam" data-restaurant="Cơm Tấm Bà Lan">
         <img src="https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?auto=format&fit=crop&w=150&q=80" alt="Cơm Tấm Bà Lan" class="recent-img">        <div class="recent-info">
           <div class="recent-name">Cơm Tấm Bà Lan</div>
           <div class="recent-desc">Đồ nướng, Cơm • 1.2 km</div>
         </div>
         <svg class="chevron-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
       </div>
-      <div class="recent-item">
+      <div class="recent-item" data-restaurant="Bún Bò Huế Chu">
         <img src="https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?auto=format&fit=crop&w=150&q=80" alt="Bún bò" class="recent-img">
         <div class="recent-info">
           <div class="recent-name">Bún Bò Huế Chu</div>
@@ -1327,6 +1327,39 @@ html_code = """
       tag: 'PHÙ HỢP 88% VỚI NHU CẦU',
       image: "url('https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=600&q=80')"
     },
+    'Sushi Haru': {
+      name: 'Sushi Haru',
+      title: 'Sushi<br>Haru',
+      match: '89%',
+      matchText: '89% match',
+      price: '85k – 150k',
+      distance: '2.4 km • 25–30 ph',
+      rating: '4.8',
+      tag: 'PHÙ HỢP 89% VỚI NHU CẦU',
+      image: "url('https://images.unsplash.com/photo-1553621042-f6e147245754?auto=format&fit=crop&w=600&q=80')"
+    },
+    'Pizza Ngon': {
+      name: 'Pizza Ngon',
+      title: 'Pizza<br>Ngon',
+      match: '81%',
+      matchText: '81% match',
+      price: '90k – 180k',
+      distance: '2.0 km • 20–30 ph',
+      rating: '4.7',
+      tag: 'PHÙ HỢP 81% VỚI NHU CẦU',
+      image: "url('https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=600&q=80')"
+    },
+    'Quán Ngon Sài Gòn': {
+      name: 'Quán Ngon Sài Gòn',
+      title: 'Quán Ngon<br>Sài Gòn',
+      match: '84%',
+      matchText: '84% match',
+      price: '45k – 90k',
+      distance: '2.1 km • 20–25 ph',
+      rating: '4.6',
+      tag: 'PHÙ HỢP 84% VỚI NHU CẦU',
+      image: "url('https://images.unsplash.com/photo-1555126634-323283e090fa?auto=format&fit=crop&w=600&q=80')"
+    },
     'Gà Rán Jollibee': {
       name: 'Gà Rán Jollibee',
       title: 'Gà Rán<br>Jollibee',
@@ -1409,11 +1442,6 @@ html_code = """
   });
 
   // Từ Map -> lọc danh sách và mở chi tiết quán
-  const mapSearchInput = document.querySelector('#screen-map .search-input');
-  const mapRestaurantCards = document.querySelectorAll('#screen-map .res-card');
-  const mapMarkers = document.querySelectorAll('#screen-map .map-marker');
-  const mapEmptyResults = document.querySelector('#screen-map .empty-results');
-
   function normalizeMapSearchText(value) {
     return (value || '')
       .toLowerCase()
@@ -1422,17 +1450,18 @@ html_code = """
       .replace(/đ/g, 'd');
   }
 
-  function filterMapRestaurants() {
+  window.filterMapRestaurants = function() {
+    const mapSearchInput = document.querySelector('#screen-map .search-input');
+    const mapRestaurantCards = document.querySelectorAll('#screen-map .res-card');
+    const mapMarkers = document.querySelectorAll('#screen-map .map-marker');
+    const mapEmptyResults = document.querySelector('#screen-map .empty-results');
     const keyword = normalizeMapSearchText(mapSearchInput ? mapSearchInput.value : '');
     let visibleCount = 0;
 
     mapRestaurantCards.forEach(card => {
-      const searchableText = normalizeMapSearchText([
-        card.dataset.restaurant,
-        card.querySelector('.res-name')?.textContent,
-        card.querySelector('.res-meta')?.textContent,
-        card.querySelector('.match-badge')?.textContent
-      ].join(' '));
+      const searchableText = normalizeMapSearchText(
+        card.dataset.restaurant || card.querySelector('.res-name')?.textContent
+      );
       const isMatch = !keyword || searchableText.includes(keyword);
       card.classList.toggle('is-hidden', !isMatch);
       if (isMatch) visibleCount += 1;
@@ -1446,18 +1475,28 @@ html_code = """
     if (mapEmptyResults) {
       mapEmptyResults.classList.toggle('is-visible', visibleCount === 0);
     }
-  }
+  };
 
-  if (mapSearchInput) {
-    mapSearchInput.addEventListener('input', filterMapRestaurants);
-  }
-
-  mapRestaurantCards.forEach(card => {
-    card.addEventListener('click', () => openRestaurantDetail(card.dataset.restaurant, 'screen-map'));
+  document.addEventListener('input', event => {
+    if (event.target.matches('#screen-map .search-input')) {
+      window.filterMapRestaurants();
+    }
   });
 
-  mapMarkers.forEach(marker => {
-    marker.addEventListener('click', () => openRestaurantDetail(marker.dataset.restaurant, 'screen-map'));
+  document.addEventListener('click', event => {
+    const mapRestaurant = event.target.closest('#screen-map .res-card, #screen-map .map-marker');
+    if (mapRestaurant) {
+      openRestaurantDetail(mapRestaurant.dataset.restaurant, 'screen-map');
+    }
+  });
+
+  document.addEventListener('click', event => {
+    const discoverRestaurant = event.target.closest('#screen-discover .trend-card, #screen-discover .recent-item');
+    if (discoverRestaurant) {
+      const restaurantName = discoverRestaurant.dataset.restaurant
+        || discoverRestaurant.querySelector('.trend-name, .recent-name')?.textContent?.trim();
+      openRestaurantDetail(restaurantName, 'screen-discover');
+    }
   });
 
   // Back từ Detail -> Result
@@ -1572,11 +1611,6 @@ html_code = """
     orderBtn.addEventListener('click', () => switchScreen('screen-detail'));
   });
 
-  // Click vào Cơm Tấm Bà Lan bên màn Khám Phá
-  const recentComTam = document.getElementById('btn-recent-comtam');
-  if(recentComTam) {
-      recentComTam.addEventListener('click', () => switchScreen('screen-detail'));
-  }
 </script>
 </body>
 </html>
