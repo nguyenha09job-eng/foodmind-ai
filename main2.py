@@ -174,9 +174,25 @@ html_code = """
   .stat-val { font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 800; color: #1a1a1a; display: flex; align-items: center; gap: 4px; }
   .stat-label { font-size: 10px; font-weight: 700; color: #999; letter-spacing: 0.5px; text-transform: uppercase; }
   .ai-banner { margin: 0 24px 24px; background: #fff; border-radius: 20px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #f0ede8; cursor: pointer; }
+  .ai-banner:active { transform: scale(0.98); }
   .ai-banner-left { display: flex; align-items: center; gap: 12px; }
   .ai-icon-wrap { width: 32px; height: 32px; background: #fff0eb; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #FF5A1F; }
   .ai-banner-text { font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 700; color: #1a1a1a; }
+  .ai-insight-panel { display: none; position: absolute; inset: 0; z-index: 70; background: rgba(26,26,26,0.36); align-items: flex-end; padding: 0 18px 26px; }
+  .ai-insight-panel.is-open { display: flex; animation: fadeIn 0.2s ease forwards; }
+  .ai-insight-sheet { width: 100%; background: #fff; border-radius: 28px; padding: 20px; box-shadow: 0 -14px 38px rgba(0,0,0,0.18); animation: sheetUp 0.24s ease forwards; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes sheetUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .ai-insight-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .ai-insight-title { font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 800; color: #1a1a1a; line-height: 1.25; }
+  .ai-insight-close { width: 34px; height: 34px; border-radius: 12px; border: none; background: #f5f3ef; color: #555; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+  .ai-insight-subtitle { font-size: 13px; color: #777; font-weight: 600; line-height: 1.45; margin-bottom: 16px; }
+  .ai-reason-list { display: flex; flex-direction: column; gap: 10px; }
+  .ai-reason-item { display: flex; gap: 12px; align-items: flex-start; background: #fafaf8; border: 1px solid #f0ede8; border-radius: 18px; padding: 12px; }
+  .ai-reason-icon { width: 34px; height: 34px; border-radius: 12px; background: #fff0eb; color: #FF5A1F; display: flex; align-items: center; justify-content: center; font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 800; flex-shrink: 0; }
+  .ai-reason-text { flex: 1; min-width: 0; }
+  .ai-reason-title { font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 800; color: #1a1a1a; margin-bottom: 3px; }
+  .ai-reason-desc { font-size: 12px; line-height: 1.45; color: #777; font-weight: 600; }
   .menu-tabs { display: flex; gap: 10px; padding: 0 24px; margin-bottom: 24px; overflow-x: auto; scrollbar-width: none; }
   .m-tab { padding: 12px 24px; border-radius: 20px; font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 700; white-space: nowrap; cursor: pointer; transition: all 0.2s; }
   .m-tab.active { background: #1a1a1a; color: #fff; }
@@ -923,6 +939,22 @@ html_code = """
     </div>
   </div>
 
+  <div class="ai-insight-panel" id="ai-insight-panel">
+    <div class="ai-insight-sheet">
+      <div class="ai-insight-head">
+        <div class="ai-insight-title">Vì sao AI chọn quán này?</div>
+        <button class="ai-insight-close" type="button" aria-label="Đóng giải thích AI">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="ai-insight-subtitle"></div>
+      <div class="ai-reason-list"></div>
+    </div>
+  </div>
+
   <!-- Cố định nút ở dưới cùng màn hình -->
   <div class="floating-order-box">
     <div class="cart-panel" id="detail-cart-panel">
@@ -1535,6 +1567,7 @@ html_code = """
     if (detailBg) detailBg.style.setProperty('--hero-image', detail.image);
     selectedRestaurantName = detail.name;
     updateFavoriteButton();
+    closeAiInsight();
     resetQuickCart();
 
     switchScreen('screen-detail');
@@ -1689,6 +1722,56 @@ html_code = """
         <svg class="chevron-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
       </div>
     `).join('');
+  }
+
+  function renderAiInsight() {
+    const detail = restaurantDetails[selectedRestaurantName] || restaurantDetails['Cơm Tấm Bà Lan'];
+    const subtitle = document.querySelector('#screen-detail .ai-insight-subtitle');
+    const reasonList = document.querySelector('#screen-detail .ai-reason-list');
+    if (!subtitle || !reasonList) return;
+
+    subtitle.textContent = detail.name + ' đạt ' + detail.matchText + ' vì khớp tốt với nhu cầu hiện tại của bạn.';
+    reasonList.innerHTML = [
+      {
+        icon: detail.match,
+        title: 'Độ phù hợp cao',
+        desc: detail.tag.replace('PHÙ HỢP ', 'AI chấm ').toLowerCase() + ', dựa trên ngân sách, khẩu vị và mức độ đói.'
+      },
+      {
+        icon: '⏱',
+        title: 'Giao trong khung hợp lý',
+        desc: detail.distance + ', phù hợp khi bạn ưu tiên ăn nhanh và ít chờ.'
+      },
+      {
+        icon: '₫',
+        title: 'Mức giá vừa với lựa chọn',
+        desc: 'Khoảng giá ' + detail.price + ' nằm trong vùng ngân sách đang được hệ thống ưu tiên.'
+      },
+      {
+        icon: '★',
+        title: 'Chất lượng ổn định',
+        desc: 'Điểm đánh giá ' + detail.rating + ' giúp AI tự tin hơn khi đề xuất quán này.'
+      }
+    ].map(item => `
+      <div class="ai-reason-item">
+        <div class="ai-reason-icon">${escapeHtml(item.icon)}</div>
+        <div class="ai-reason-text">
+          <div class="ai-reason-title">${escapeHtml(item.title)}</div>
+          <div class="ai-reason-desc">${escapeHtml(item.desc)}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function openAiInsight() {
+    renderAiInsight();
+    const panel = document.getElementById('ai-insight-panel');
+    if (panel) panel.classList.add('is-open');
+  }
+
+  function closeAiInsight() {
+    const panel = document.getElementById('ai-insight-panel');
+    if (panel) panel.classList.remove('is-open');
   }
 
   function updateMealPlanCart(mealId) {
@@ -1886,6 +1969,20 @@ html_code = """
       }
       updateFavoriteButton();
       renderFavoriteRestaurants();
+    });
+  }
+
+  const aiBanner = document.querySelector('#screen-detail .ai-banner');
+  if (aiBanner) {
+    aiBanner.addEventListener('click', openAiInsight);
+  }
+
+  const aiInsightPanel = document.getElementById('ai-insight-panel');
+  if (aiInsightPanel) {
+    aiInsightPanel.addEventListener('click', event => {
+      if (event.target === aiInsightPanel || event.target.closest('.ai-insight-close')) {
+        closeAiInsight();
+      }
     });
   }
 
