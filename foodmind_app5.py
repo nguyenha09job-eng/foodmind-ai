@@ -67,7 +67,7 @@ html_code = """
     z-index: 10;
   }
 
-  /* Progress Bar Stepper (4 steps, 3 active for this screen) */
+  /* Progress Bar Stepper (5 steps, current screen is step 3) */
   .stepper {
     display: flex;
     gap: 8px;
@@ -249,6 +249,7 @@ html_code = """
     <div class="step active"></div>
     <div class="step active"></div>
     <div class="step"></div>
+    <div class="step"></div>
   </div>
 
   <div class="icon-box">
@@ -265,7 +266,7 @@ html_code = """
     <div class="status-badge" id="statusText">Hơi đói</div>
     
     <div class="slider-wrapper">
-      <input type="range" min="0" max="3" step="1" value="1" id="hungerSlider">
+      <input type="range" min="0" max="100" step="0.1" value="35" id="hungerSlider">
       <div class="slider-labels">
         <span class="active">Ăn nhẹ</span>
         <span>Hơi đói</span>
@@ -307,17 +308,21 @@ html_code = """
   // Hàm cập nhật giao diện khi kéo slider
   function updateHungerSlider() {
     const val = Number(slider.value);
-    const state = hungerStates[val] || hungerStates[1];
-    const fill = (val / (hungerStates.length - 1)) * 100;
+    const fill = Math.max(0, Math.min(100, val));
+    const stateIndex = Math.min(
+      hungerStates.length - 1,
+      Math.floor(fill / (100 / hungerStates.length))
+    );
+    const state = hungerStates[stateIndex] || hungerStates[1];
 
     // Cập nhật background fill cho thanh trượt
     slider.style.backgroundSize = fill + '% 100%';
 
-    // Cập nhật Text và Emoji theo 4 nấc
+    // Cập nhật Text và Emoji theo vùng, trong khi slider vẫn trượt mượt
     emoji.textContent = state.emoji;
     statusText.textContent = state.text;
     labels.forEach((label, index) => {
-      label.classList.toggle('active', index === val);
+      label.classList.toggle('active', index === stateIndex);
     });
   }
 
