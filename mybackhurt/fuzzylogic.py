@@ -10,6 +10,8 @@ from geopy.distance import geodesic
 def trimf(x, abc):
     """Hàm liên thuộc tam giác (Triangular Membership Function)"""
     a, b, c = abc
+    if a == b and x == a: return 1.0
+    if b == c and x == c: return 1.0
     if x <= a or x >= c: return 0.0
     elif a < x <= b: return (x - a) / (b - a) if a != b else 1.0
     elif b < x < c: return (c - x) / (c - b) if b != c else 1.0
@@ -18,6 +20,8 @@ def trimf(x, abc):
 def trapmf(x, abcd):
     """Hàm liên thuộc hình thang (Trapezoidal Membership Function)"""
     a, b, c, d = abcd
+    if a == b and x <= b: return 1.0
+    if c == d and x >= c: return 1.0
     if x <= a or x >= d: return 0.0
     elif a < x <= b: return (x - a) / (b - a) if a != b else 1.0
     elif b < x <= c: return 1.0
@@ -35,7 +39,10 @@ def load_data():
         config = {
             "price_membership_fn": {"under_30k": [0, 15000, 30000], "30_50k": [20000, 40000, 60000], "50_100k": [45000, 75000, 120000], "over_100k": [90000, 150000, 10000000]},
             "time_membership_fn": {"express": [0, 0, 10, 15], "fast": [10, 15, 25, 30], "normal": [20, 30, 45, 60], "no_rush": [45, 60, 120, 120]},
-            "hunger_to_calorie_map": {"Light": 200, "Hungry": 500, "Very_Hungry": 800, "Starving": 1200},
+            "hunger_scale": {"min": 0, "max": 10, "default": 3.5},
+            "hunger_label_map": {"Snack": 1.5, "Light": 1.5, "Slightly_Hungry": 4, "Hungry": 6.5, "Very_Hungry": 9, "Starving": 10},
+            "hunger_membership_fn": {"Snack": [0, 0, 2.5, 3.5], "Slightly_Hungry": [2.5, 4, 5.5], "Hungry": [4.5, 6.5, 8], "Very_Hungry": [7, 8.5, 10, 10]},
+            "hunger_to_calorie_map": {"Snack": 250, "Light": 250, "Slightly_Hungry": 450, "Hungry": 700, "Very_Hungry": 950, "Starving": 1100},
             "score_weights": {"price": 0.3, "time": 0.2, "calorie": 0.2, "diet": 0.15, "weather": 0.15}
         }
     
@@ -57,8 +64,49 @@ def calculate_time_score(est_delivery_time, user_time_label, config):
     abcd = config['time_membership_fn'].get(user_time_label, [0, 0, 120, 120])
     return trapmf(float(est_delivery_time), abcd)
 
-def calculate_calorie_score(dish_calories, user_hunger_label, config):
-    target_cal = config['hunger_to_calorie_map'].get(user_hunger_label, 500)
+def normalize_hunger_value(user_hunger, config):
+    scale = config.get('hunger_scale', {})
+    min_hunger = float(scale.get('min', 0))
+    max_hunger = float(scale.get('max', 10))
+
+    try:
+        hunger_value = float(user_hunger)
+    except (TypeError, ValueError):
+        label_map = config.get('hunger_label_map', {})
+        hunger_value = float(label_map.get(user_hunger, scale.get('default', 3.5)))
+
+    return max(min_hunger, min(max_hunger, hunger_value))
+
+def calculate_target_calorie_from_hunger(user_hunger, config):
+    hunger_value = normalize_hunger_value(user_hunger, config)
+    membership_fns = config.get('hunger_membership_fn', {})
+    calorie_map = config.get('hunger_to_calorie_map', {})
+
+    weighted_calories = 0.0
+    total_membership = 0.0
+
+    for hunger_label, points in membership_fns.items():
+        if len(points) == 3:
+            degree = trimf(hunger_value, points)
+        elif len(points) == 4:
+            degree = trapmf(hunger_value, points)
+        else:
+            continue
+
+        target = calorie_map.get(hunger_label)
+        if target is None or degree <= 0:
+            continue
+
+        weighted_calories += degree * float(target)
+        total_membership += degree
+
+    if total_membership > 0:
+        return weighted_calories / total_membership
+
+    return float(calorie_map.get(user_hunger, calorie_map.get('Slightly_Hungry', 500)))
+
+def calculate_calorie_score(dish_calories, user_hunger, config):
+    target_cal = calculate_target_calorie_from_hunger(user_hunger, config)
     dish_cal = float(dish_calories)
     diff = abs(dish_cal - target_cal)
     score = 1.0 - min(1.0, diff / target_cal)

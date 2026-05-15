@@ -14,10 +14,41 @@
   },
 
   "hunger_to_calorie_map": {
-    "Light": 200,
-    "Hungry": 500,
-    "Very_Hungry": 800,
-    "Starving": 1200
+    "Snack": 250,
+    "Light": 250,
+    "Slightly_Hungry": 450,
+    "Hungry": 700,
+    "Very_Hungry": 950,
+    "Ăn nhẹ": 250,
+    "Hơi đói": 450,
+    "Đói": 700,
+    "Rất đói": 950
+  },
+
+  "hunger_scale": {
+    "min": 0,
+    "max": 10,
+    "default": 3.5
+  },
+
+  "hunger_label_map": {
+    "Snack": 1.5,
+    "Light": 1.5,
+    "Slightly_Hungry": 4,
+    "Hungry": 6.5,
+    "Very_Hungry": 9,
+    "Starving": 10,
+    "Ăn nhẹ": 1.5,
+    "Hơi đói": 4,
+    "Đói": 6.5,
+    "Rất đói": 9
+  },
+
+  "hunger_membership_fn": {
+    "Snack": [0, 0, 2.5, 3.5],
+    "Slightly_Hungry": [2.5, 4, 5.5],
+    "Hungry": [4.5, 6.5, 8],
+    "Very_Hungry": [7, 8.5, 10, 10]
   },
 
   "diet_macro_targets": {

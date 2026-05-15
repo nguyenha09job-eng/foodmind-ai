@@ -266,7 +266,7 @@ html_code = """
     <div class="status-badge" id="statusText">Hơi đói</div>
     
     <div class="slider-wrapper">
-      <input type="range" min="0" max="100" step="0.1" value="35" id="hungerSlider">
+      <input type="range" min="0" max="10" step="0.1" value="3.5" id="hungerSlider" aria-label="Mức độ đói từ 0 đến 10">
       <div class="slider-labels">
         <span class="active">Ăn nhẹ</span>
         <span>Hơi đói</span>
@@ -299,20 +299,18 @@ html_code = """
   const labels = document.querySelectorAll('.slider-labels span');
 
   const hungerStates = [
-    { emoji: '🥗', text: 'Ăn nhẹ' },
-    { emoji: '😋', text: 'Hơi đói' },
-    { emoji: '🤤', text: 'Đói' },
-    { emoji: '😫', text: 'Rất đói' }
+    { emoji: '🥗', text: 'Ăn nhẹ', key: 'Snack', min: 0, max: 2.5 },
+    { emoji: '😋', text: 'Hơi đói', key: 'Slightly_Hungry', min: 2.5, max: 5 },
+    { emoji: '🤤', text: 'Đói', key: 'Hungry', min: 5, max: 7.5 },
+    { emoji: '😫', text: 'Rất đói', key: 'Very_Hungry', min: 7.5, max: 10 }
   ];
 
   // Hàm cập nhật giao diện khi kéo slider
   function updateHungerSlider() {
     const val = Number(slider.value);
-    const fill = Math.max(0, Math.min(100, val));
-    const stateIndex = Math.min(
-      hungerStates.length - 1,
-      Math.floor(fill / (100 / hungerStates.length))
-    );
+    const hungerValue = Math.max(0, Math.min(10, val));
+    const fill = hungerValue * 10;
+    const stateIndex = Math.min(hungerStates.length - 1, Math.floor(hungerValue / 2.5));
     const state = hungerStates[stateIndex] || hungerStates[1];
 
     // Cập nhật background fill cho thanh trượt
@@ -324,6 +322,15 @@ html_code = """
     labels.forEach((label, index) => {
       label.classList.toggle('active', index === stateIndex);
     });
+
+    window.foodmindHunger = {
+      value: Number(hungerValue.toFixed(1)),
+      label: state.text,
+      key: state.key
+    };
+    try {
+      localStorage.setItem('foodmind_hunger', JSON.stringify(window.foodmindHunger));
+    } catch (err) {}
   }
 
   slider.addEventListener('input', updateHungerSlider);
