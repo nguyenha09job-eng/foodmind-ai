@@ -1,0 +1,11 @@
+restaurant
+restaurant_id;name;slug;lat;lng;address;open_hours;is_open;rating;review_count;price_avg;price_range_label;avg_prep_time;cuisine_type;cover_image_url;logo_url;phone_number
+R1;Cơm Tấm Ba Ghiền;com-tam-ba-ghien;10.7932;106.6781;84 Đặng Văn Ngữ Phường 10 Phú Nhuận;07:00-21:30;TRUE;4.8;1250;55000;50-100k;10;vn;https://example.com/r1_cover.jpg;https://example.com/r1_logo.jpg;901234567
+R2;Mì Cay Sasin;mi-cay-sasin;10.7715;106.6624;11 Sư Vạn Hạnh Phường 12 Quận 10;09:00-22:30;TRUE;4.2;890;60000;50-100k;15;kr;https://example.com/r2_cover.jpg;https://example.com/r2_logo.jpg;902345678
+R3;KFC Trần Hưng Đạo;kfc-tran-hung-dao;10.7551;106.6812;104 Trần Hưng Đạo Quận 5;09:00-23:00;TRUE;4.0;3200;65000;50-100k;8;eu;https://example.com/r3_cover.jpg;https://example.com/r3_logo.jpg;19001598
+R4;Nhà hàng chay Hoa Sen;chay-hoa-sen;10.7689;106.6953;250 Lê Thánh Tôn Quận 1;07:00-20:00;TRUE;4.7;450;35000;30-50k;15;vn;https://example.com/r4_cover.jpg;https://example.com/r4_logo.jpg;903456789
+R5;The Salad Station;the-salad-station;10.7825;106.6896;15 Pasteur Quận 1;08:00-21:00;TRUE;4.8;620;85000;50-100k;10;eu|other;https://example.com/r9_cover.jpg;https://example.com/r9_logo.jpg;907890123
+R6;TukTuk Thai Bistro;tuktuk-thai-bistro;10.7794;106.7022;17/11 Lê Thánh Tôn Quận 1;10:00-22:30;TRUE;4.5;890;95000;50-100k;20;th;https://example.com/r6_cover.jpg;https://example.com/r6_logo.jpg;908901234
+R7;Haidilao Bitexco;haidilao-bitexco;10.7716;106.7044;2 Hải Triều Quận 1;10:00-02:00;TRUE;4.8;3200;350000;over60k;15;cn;https://example.com/r7_cover.jpg;https://example.com/r7_logo.jpg;2822539156
+R8;Gong Cha Phan Xích Long;gong-cha-phan-xich-long;10.7963;106.6885;240 Phan Xích Long Phú Nhuận;09:00-22:00;TRUE;4.5;1200;55000;50-100k;5;tw;https://example.com/r15_cover.jpg;https://example.com/r15_logo.jpg;2862751888
+R9;Hủ Tiếu Nam Vang Thành Đạt;hu-tieu-nam-vang-thanh-dat;10.7628;106.6816;34 Cô Bắc Quận 1;00:00-23:59;TRUE;4.4;2800;55000;50-100k;5;vn;https://example.com/r20_cover.jpg;https://example.com/r20_logo.jpg;903344556

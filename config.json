@@ -1,0 +1,82 @@
+{
+  "price_membership_fn": {
+    "under_30k": [0, 15000, 30000],
+    "30_50k": [20000, 40000, 60000],
+    "50_100k": [45000, 75000, 120000],
+    "over_100k": [90000, 150000, 10000000]
+  },
+
+  "time_membership_fn": {
+    "express": [0, 0, 10, 15],
+    "fast": [10, 15, 25, 30],
+    "normal": [20, 30, 45, 60],
+    "no_rush": [45, 60, 120, 120]
+  },
+
+  "hunger_to_calorie_map": {
+    "Light": 200,
+    "Hungry": 500,
+    "Very_Hungry": 800,
+    "Starving": 1200
+  },
+
+  "diet_macro_targets": {
+    "Diet": {
+      "carb_max": 50,
+      "fat_max": 20,
+      "calorie_max": 500
+    },
+    "Bulking": {
+      "protein_min": 30,
+      "carb_min": 80,
+      "calorie_min": 800
+    },
+    "Normal": {
+      "protein_min": 15,
+      "carb_max": 100
+    }
+  },
+
+  "weather_food_map": {
+    "Hot": {
+      "drink": 1.5,
+      "dessert": 1.5,
+      "healthy_meal": 1.2,
+      "snack": 1.0,
+      "fast_food": 0.7,
+      "full_meal": 0.5
+    },
+    "Cold": {
+      "full_meal": 1.5,
+      "fast_food": 1.2,
+      "snack": 1.0,
+      "healthy_meal": 0.8,
+      "drink": 0.8,
+      "dessert": 0.5
+    },
+    "Rainy": {
+      "full_meal": 1.5,
+      "fast_food": 1.0,
+      "snack": 1.0,
+      "drink": 0.7,
+      "healthy_meal": 0.5,
+      "dessert": 0.5
+    },
+    "Normal": {
+      "full_meal": 1.0,
+      "fast_food": 1.0,
+      "healthy_meal": 1.0,
+      "snack": 1.0,
+      "dessert": 1.0,
+      "drink": 1.0
+    }
+  },
+
+  "score_weights": {
+    "price": 0.25,
+    "time": 0.25,
+    "calorie": 0.20,
+    "diet": 0.20,
+    "weather": 0.10
+  }
+}

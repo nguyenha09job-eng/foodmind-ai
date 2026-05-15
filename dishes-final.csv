@@ -1,0 +1,60 @@
+dishes
+dish_id;restaurant_id;name;price;calories;protein_g;carb_g;fat_g;diet_tags;cuisine_type;food_category;rating;order_count;is_available
+D0101;R1;Cơm Tấm Sườn Bì Chả;75000;850;45.0;90.0;35.0;"[""bulking"",""high_protein""]";vn;rice;4.8;1500;TRUE
+D0102;R1;Cơm Tấm Sườn Trứng;65000;750;40.0;85.0;30.0;"[""bulking""]";vn;rice;4.7;1200;TRUE
+D0103;R1;Cơm Tấm Gà Nướng;60000;700;42.0;80.0;25.0;"[""high_protein""]";vn;rice;4.5;900;TRUE
+D0104;R1;Cơm Tấm Ba Chỉ Quay;70000;900;35.0;85.0;45.0;"[""bulking""]";vn;rice;4.6;850;TRUE
+D0105;R1;Cơm Tấm Sườn Mỡ Hành;55000;720;38.0;85.0;28.0;[];vn;rice;4.8;1100;TRUE
+D0201;R2;Mì Cay Bò Kim Chi;65000;550;25.0;65.0;15.0;"[""high_protein""]";kr;noodle;4.5;1300;TRUE
+D0202;R2;Mì Cay Hải Sản;75000;500;30.0;65.0;12.0;"[""high_protein"",""healthy""]";kr;noodle;4.7;1400;TRUE
+D0203;R2;Mì Cay Thập Cẩm;85000;680;35.0;65.0;18.0;"[""bulking""]";kr;noodle;4.8;1100;TRUE
+D0204;R2;Mì Cay Xúc Xích;55000;620;18.0;68.0;22.0;[];kr;noodle;4.2;800;TRUE
+D0205;R2;Kimbap Truyền Thống;40000;350;10.0;55.0;8.0;"[""healthy""]";kr;snack;4.4;950;TRUE
+D0207;R2;Tokbokki Phô Mai;55000;450;15.0;65.0;12.0;[];kr;snack;4.6;1050;TRUE
+D0301;R3;Gà Rán Truyền Thống;38000;320;18.0;12.0;22.0;"[""high_protein""]";eu;fast_food;4.3;3000;TRUE
+D0302;R3;Gà Rán Giòn Cay;38000;340;18.0;14.0;23.0;"[""high_protein""]";eu;fast_food;4.5;3500;TRUE
+D0303;R3;Burger Zinger;65000;550;25.0;50.0;25.0;[];eu;fast_food;4.4;2100;TRUE
+D0304;R3;Gà Popcorn;45000;420;15.0;35.0;24.0;[];eu;fast_food;4.2;1800;TRUE
+D0305;R3;Khoai Tây Chiên;25000;280;3.0;38.0;14.0;[];eu;fast_food;4.1;2500;TRUE
+D0306;R3;Bắp Cải Trộn Salad;15000;120;1.0;12.0;8.0;[];eu;Salad;4.0;1200;TRUE
+D0401;R4;Cơm Gạo Lứt Trộn Chay;45000;350;12.0;65.0;8.0;"[""healthy"",""eat_clean""]";vn;Rice;4.8;600;TRUE
+D0402;R4;Bún Chay Thập Cẩm;40000;320;10.0;58.0;6.0;"[""healthy""]";vn;noodle;4.6;550;TRUE
+D0404;R4;Gỏi Cuốn Chay;25000;180;6.0;32.0;3.0;"[""healthy"",""eat_clean""]";vn;snack;4.7;850;TRUE
+D0405;R4;Canh Rong Biển Đậu Hũ;30000;90;8.0;8.0;3.0;"[""healthy"",""low_carb""]";vn;soup;4.8;650;TRUE
+D0407;R4;Salad Rau Mầm;45000;110;3.0;8.0;7.0;"[""healthy"",""low_carb"",""eat_clean""]";vn;Salad;4.9;500;TRUE
+D0408;R4;Nước Ép Cần Tây;35000;40;1.0;9.0;0.0;"[""healthy"",""eat_clean"",""low_carb""]";vn;drink;4.8;600;TRUE
+D0901;R5;Caesar Salad Gà;85000;350;28.0;12.0;22.0;"[""healthy"",""high_protein"",""eat_clean""]";eu|other;Salad;4.8;1200;TRUE
+D0902;R5;Salad Ức Gà;80000;380;30.0;15.0;20.0;"[""healthy"",""high_protein"",""eat_clean""]";eu|other;Salad;4.9;1500;TRUE
+D0903;R5;Salad Cá Hồi;120000;280;22.0;10.0;16.0;"[""healthy"",""low_carb"",""eat_clean""]";eu|other;Salad;4.8;900;TRUE
+D0904;R5;Cơm Bò Áp Chảo;95000;450;35.0;40.0;15.0;"[""healthy"",""high_protein""]";eu|other;rice;4.7;1100;TRUE
+D0905;R5;Salad Trái Cây;75000;320;8.0;45.0;14.0;"[""healthy"",""eat_clean""]";eu|other;Salad;4.6;700;TRUE
+D0906;R5;Súp Bí Đỏ Kem;55000;220;5.0;28.0;10.0;"[""healthy""]";eu|other;soup;4.5;600;TRUE
+D0907;R5;Nước Ép Cà Rốt;45000;110;1.0;25.0;0.0;"[""healthy"",""eat_clean""]";eu|other;drink;4.8;800;TRUE
+D0908;R5;Kombucha Dâu;50000;40;0.0;10.0;0.0;"[""healthy"",""low_carb""]";eu|other;drink;4.9;900;TRUE
+D1001;R6;Pad Thái Gà;95000;550;25.0;65.0;18.0;[];th;noodle;4.7;1100;TRUE
+D1002;R6;Pad Thái Tôm;115000;520;28.0;62.0;15.0;[];th;noodle;4.8;1300;TRUE
+D1003;R6;Súp Tomyum Hải Sản;130000;350;30.0;20.0;15.0;"[""healthy"",""low_carb""]";th;noodle;4.9;1500;TRUE
+D1004;R6;Gỏi Đu Đủ Som Tum;75000;180;8.0;25.0;6.0;"[""healthy"",""eat_clean""]";th;salad;4.6;900;TRUE
+D1005;R6;Cơm Chiên Trái Thơm;105000;600;15.0;85.0;20.0;[];th;rice;4.5;800;TRUE
+D1007;R6;Xôi Xoài;65000;420;5.0;75.0;12.0;[];th;dessert;4.8;1200;TRUE
+D1008;R6;Trà Thái Đỏ;40000;250;2.0;45.0;8.0;[];th;drink;4.6;1400;TRUE
+D1401;R7;Nước Lẩu Tomyum;150000;250;5.0;15.0;18.0;[];cn;hotpot;4.8;3000;TRUE
+D1402;R7;Nước Lẩu Cà Chua;120000;150;3.0;20.0;5.0;"[""healthy""]";cn;hotpot;4.9;2800;TRUE
+D1403;R7;Thịt Bò Mỹ Mềm;180000;350;25.0;0.0;28.0;"[""low_carb"",""high_protein""]";cn;hotpot;4.9;3500;TRUE
+D1404;R7;Tôm Phỉ Thúy;160000;200;22.0;5.0;10.0;"[""healthy"",""high_protein""]";cn;hotpot;4.8;2500;TRUE
+D1405;R7;Ruột Vịt Giòn;90000;180;15.0;0.0;12.0;"[""low_carb""]";cn;hotpot;4.6;1500;TRUE
+D1406;R7;Nấm Kim Châm;60000;40;3.0;6.0;0.5;"[""healthy"",""eat_clean"",""low_carb""]";cn;hotpot;4.7;2200;TRUE
+D1407;R7;Múa Mì Tươi;30000;250;8.0;50.0;2.0;[];cn;hotpot;4.9;3200;TRUE
+D1408;R7;Nước Xí Muội;40000;120;0.0;30.0;0.0;[];cn;drink;4.8;2000;TRUE
+D1501;R8;Trà Sữa Trân Châu Đen;55000;350;5.0;55.0;12.0;[];tw;drink;4.7;3500;TRUE
+D1502;R8;Trà Sữa Oolong;58000;320;5.0;50.0;11.0;[];tw;drink;4.6;2800;TRUE
+D1503;R8;Trà Đen Milkfoam;60000;380;6.0;48.0;18.0;[];tw;drink;4.8;3100;TRUE
+D1504;R8;Matcha Đá Xay;65000;450;8.0;65.0;15.0;[];tw;drink;4.5;1500;TRUE
+D1505;R8;Trà Alisan Trái Cây;62000;220;1.0;50.0;0.0;[];tw;drink;4.7;2100;TRUE
+D1506;R8;Sữa Tươi Trân Châu;65000;420;8.0;68.0;12.0;[];tw;drink;4.8;3200;TRUE
+D1507;R8;Trà Xanh Xoài;55000;180;0.5;42.0;0.0;[];tw;drink;4.4;1200;TRUE
+D1508;R8;Trà Oolong Vải;58000;190;0.5;45.0;0.0;[];tw;drink;4.6;1800;TRUE
+D2001;R9;Hủ Tiếu Nam Vang Nước;55000;520;30.0;65.0;18.0;"[""high_protein""]";vn;noodle;4.7;2800;TRUE
+D2002;R9;Hủ Tiếu Nam Vang Khô;55000;580;30.0;70.0;22.0;"[""high_protein""]";vn;noodle;4.8;3100;TRUE
+D2003;R9;Hủ Tiếu Xí Quách;70000;750;45.0;65.0;35.0;"[""bulking""]";vn;noodle;4.9;2100;TRUE
+D2004;R9;Súp Xí Quách;45000;350;25.0;5.0;28.0;"[""low_carb""]";vn;soup;4.8;1200;TRUE
