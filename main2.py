@@ -537,69 +537,100 @@ html_code = """
       </div>
     </div>
 
-    <div class="food-card-wrap">
-      <div class="food-card">
-        <div style="width:100%;height:100%;background:url('https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?auto=format&fit=crop&w=600&q=80') center/cover;position:relative;">
-        </div> 
-        <div class="match-badge">
-          <span class="match-label">Match</span>
-          <span class="match-pct">94%</span>
-        </div>
-        <div class="food-info">
-          <div class="food-meta">
-            <div class="rating-badge">
-              <span class="rating-star">⭐</span>
-              <span class="rating-val">4.8</span>
-            </div>
-            <span class="food-distance">1.2 km • 15–20 ph</span>
-          </div>
-          <div class="food-bottom">
-            <span class="food-name">Cơm Tấm Bà Lan</span>
-            <span class="price-badge">45k – 65k</span>
+    <div class="menu-list">
+      <div class="menu-item">
+        <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=150&q=80" alt="Salad ức gà áp chảo" class="menu-img">
+        <div class="menu-info">
+          <div class="menu-name">Salad ức gà áp chảo</div>
+          <div class="menu-desc">Ức gà mềm, rau xanh, sốt mè rang nhẹ</div>
+          <div class="menu-meta">
+            <span class="menu-cal">🔥 430 kcal</span>
+            <span style="color:#ccc">•</span>
+            <span class="menu-price">55,000 đ</span>
           </div>
         </div>
+        <button class="add-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
       </div>
-    </div>
 
-    <div class="tags-row">
-      <span class="tag">PHÙ HỢP 94% VỚI NHU CẦU</span>
-      <span class="tag">GIAO NHANH</span>
-      <span class="tag">NGON RẺ</span>
-    </div>
+      <div class="menu-item">
+        <img src="https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=150&q=80" alt="Cơm gạo lứt bò áp chảo" class="menu-img">
+        <div class="menu-info">
+          <div class="menu-name">Cơm gạo lứt bò áp chảo</div>
+          <div class="menu-desc">Bò áp chảo, rau củ, cơm gạo lứt</div>
+          <div class="menu-meta">
+            <span class="menu-cal">🔥 610 kcal</span>
+            <span style="color:#ccc">•</span>
+            <span class="menu-price">62,000 đ</span>
+          </div>
+        </div>
+        <button class="add-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
+      </div>
 
-    <div class="food-card-peek">
-      <div style="position:absolute;inset:0;background:linear-gradient(135deg,#8b1a1a,#6b0f0f); opacity: 0.8;"></div>
-      <span class="peek-name">Bún Bò Huế Chú Hải</span>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;position:relative;z-index:1;gap:3px;">
-        <span class="peek-price">50k – 70k</span>
-        <span class="peek-match">87% match</span>
+      <div class="menu-item">
+        <img src="https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?auto=format&fit=crop&w=150&q=80" alt="Bún bò tô nhỏ" class="menu-img">
+        <div class="menu-info">
+          <div class="menu-name">Bún bò tô nhỏ</div>
+          <div class="menu-desc">Nước dùng đậm vị, phần vừa đủ no</div>
+          <div class="menu-meta">
+            <span class="menu-cal">🔥 520 kcal</span>
+            <span style="color:#ccc">•</span>
+            <span class="menu-price">48,000 đ</span>
+          </div>
+        </div>
+        <button class="add-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
       </div>
-    </div>
 
-    <div class="food-card-peek">
-      <div style="position:absolute;inset:0;background:linear-gradient(135deg,#1a3a4a,#0f2a38); opacity: 0.8;"></div>
-      <span class="peek-name">Phở Bò Hà Nội</span>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;position:relative;z-index:1;gap:3px;">
-        <span class="peek-price">45k – 60k</span>
-        <span class="peek-match">82% match</span>
+      <div class="menu-item">
+        <img src="https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=150&q=80" alt="Greek yogurt granola" class="menu-img">
+        <div class="menu-info">
+          <div class="menu-name">Greek yogurt granola</div>
+          <div class="menu-desc">Yogurt Hy Lạp, granola, trái cây tươi</div>
+          <div class="menu-meta">
+            <span class="menu-cal">🔥 310 kcal</span>
+            <span style="color:#ccc">•</span>
+            <span class="menu-price">42,000 đ</span>
+          </div>
+        </div>
+        <button class="add-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
       </div>
-    </div>
-    
-    <div class="food-card-peek">
-      <div style="position:absolute;inset:0;background:linear-gradient(135deg,#2e4a1a,#1a380f); opacity: 0.8;"></div>
-      <span class="peek-name">Salad Healthy Xanh</span>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;position:relative;z-index:1;gap:3px;">
-        <span class="peek-price">60k – 85k</span>
-        <span class="peek-match">78% match</span>
-      </div>
-    </div>
-    
-    <div class="food-card-peek">
-      <div style="position:absolute;inset:0;background:linear-gradient(135deg,#8b6508,#5c4305); opacity: 0.8;"></div>
-      <span class="peek-name">Gà Rán Jollibee</span>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;position:relative;z-index:1;gap:3px;">
-        <span class="peek-price">40k – 90k</span>
-        <span class="peek-match">75% match</span>
+
+      <div class="menu-item">
+        <img src="https://images.unsplash.com/photo-1582450871972-ab5ca641643d?auto=format&fit=crop&w=150&q=80" alt="Gỏi cuốn tôm thịt" class="menu-img">
+        <div class="menu-info">
+          <div class="menu-name">Gỏi cuốn tôm thịt</div>
+          <div class="menu-desc">Tôm, thịt nạc, rau thơm, nước chấm đậu</div>
+          <div class="menu-meta">
+            <span class="menu-cal">🔥 360 kcal</span>
+            <span style="color:#ccc">•</span>
+            <span class="menu-price">38,000 đ</span>
+          </div>
+        </div>
+        <button class="add-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
       </div>
     </div>
 
@@ -1238,6 +1269,21 @@ html_code = """
       isAnimating = false;
     }
   }
+
+  function switchResultTab(targetId) {
+    const oldScreen = document.getElementById(currentScreenId);
+    const newScreen = document.getElementById(targetId);
+    if (!newScreen || currentScreenId === targetId) return;
+
+    isAnimating = false;
+    if (oldScreen) {
+      oldScreen.style.display = 'none';
+      oldScreen.classList.remove('page-enter', 'page-exit');
+    }
+    newScreen.style.display = 'flex';
+    newScreen.classList.remove('page-enter', 'page-exit');
+    currentScreenId = targetId;
+  }
   // ==========================================
   // 2. TỰ ĐỘNG CHUYỂN LOADING -> RESULT
   // ==========================================
@@ -1522,11 +1568,11 @@ html_code = """
   // Đổi tab "Quán ăn" và "Món lẻ" (giữa Result và Result 1)
   const tabsResult = document.querySelectorAll('#screen-result .tab-btn');
   if (tabsResult.length > 1) {
-    tabsResult[1].addEventListener('click', () => switchScreen('screen-result1'));
+    tabsResult[1].addEventListener('click', () => switchResultTab('screen-result1'));
   }
   const tabsResult1 = document.querySelectorAll('#screen-result1 .tab-btn');
   if (tabsResult1.length > 0) {
-    tabsResult1[0].addEventListener('click', () => switchScreen('screen-result'));
+    tabsResult1[0].addEventListener('click', () => switchResultTab('screen-result'));
   }
 
   // ==========================================
