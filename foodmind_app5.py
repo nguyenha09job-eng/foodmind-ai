@@ -174,13 +174,23 @@ html_code = """
   }
 
   .slider-labels {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
     margin-top: 12px;
     font-family: 'Sora', sans-serif;
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 700;
     color: #999;
+  }
+
+  .slider-labels span {
+    text-align: center;
+    line-height: 1.25;
+  }
+
+  .slider-labels span.active {
+    color: #FF5A1F;
   }
 
   /* Bottom Actions */
@@ -255,9 +265,11 @@ html_code = """
     <div class="status-badge" id="statusText">Hơi đói</div>
     
     <div class="slider-wrapper">
-      <input type="range" min="0" max="100" value="50" id="hungerSlider">
+      <input type="range" min="0" max="3" step="1" value="1" id="hungerSlider">
       <div class="slider-labels">
-        <span>Ăn nhẹ</span>
+        <span class="active">Ăn nhẹ</span>
+        <span>Hơi đói</span>
+        <span>Đói</span>
         <span>Rất đói</span>
       </div>
     </div>
@@ -283,25 +295,34 @@ html_code = """
   const slider = document.getElementById('hungerSlider');
   const emoji = document.getElementById('emoji');
   const statusText = document.getElementById('statusText');
+  const labels = document.querySelectorAll('.slider-labels span');
+
+  const hungerStates = [
+    { emoji: '🥗', text: 'Ăn nhẹ' },
+    { emoji: '😋', text: 'Hơi đói' },
+    { emoji: '🤤', text: 'Đói' },
+    { emoji: '😫', text: 'Rất đói' }
+  ];
 
   // Hàm cập nhật giao diện khi kéo slider
-  slider.addEventListener('input', function() {
-    const val = this.value;
+  function updateHungerSlider() {
+    const val = Number(slider.value);
+    const state = hungerStates[val] || hungerStates[1];
+    const fill = (val / (hungerStates.length - 1)) * 100;
+
     // Cập nhật background fill cho thanh trượt
-    this.style.backgroundSize = val + '% 100%';
-    
-    // Cập nhật Text và Emoji dựa theo mốc
-    if (val < 30) {
-      emoji.textContent = '🙂';
-      statusText.textContent = 'Ăn nhẹ';
-    } else if (val >= 30 && val < 75) {
-      emoji.textContent = '😋';
-      statusText.textContent = 'Hơi đói';
-    } else {
-      emoji.textContent = '🤤';
-      statusText.textContent = 'Rất đói';
-    }
-  });
+    slider.style.backgroundSize = fill + '% 100%';
+
+    // Cập nhật Text và Emoji theo 4 nấc
+    emoji.textContent = state.emoji;
+    statusText.textContent = state.text;
+    labels.forEach((label, index) => {
+      label.classList.toggle('active', index === val);
+    });
+  }
+
+  slider.addEventListener('input', updateHungerSlider);
+  updateHungerSlider();
 </script>
 
 </body>

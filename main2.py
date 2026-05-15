@@ -48,6 +48,7 @@ html_code = """
   /* ================= CSS MÀN HÌNH 1 (LOADING) ================= */
   #screen-loading {
     display: flex; flex-direction: column; align-items: center;
+    position: absolute; inset: 0; z-index: 50; background: #f5f3ef;
     padding: 60px 28px 48px; width: 100%; height: 100%;
   }
   .glow { position: absolute; top: 30px; left: 50%; transform: translateX(-50%); width: 240px; height: 240px; background: radial-gradient(circle, rgba(255,90,31,0.15) 0%, transparent 70%); pointer-events: none; }
@@ -348,8 +349,6 @@ html_code = """
   #screen-discover .recent-desc { font-size: 12px; color: #999; font-weight: 500; }
   #screen-discover .favorite-empty { margin: 0 24px; background: #fff; border: 1px dashed #e8e6e0; border-radius: 20px; padding: 18px; color: #888; font-size: 13px; font-weight: 700; text-align: center; }
   #screen-discover .chevron-icon { color: #ccc; margin-right: 8px; }
-  #screen-loading { position: absolute; inset: 0; z-index: 50; background: #f5f3ef; }
-
   /* 1. Spark Burst Ring */
   .burst-ring {
     position: absolute;
@@ -436,7 +435,7 @@ html_code = """
         <span class="engine-title">Fuzzy Engine Live</span>
       </div>
       <div class="progress-row">
-        <div class="progress-meta"><span class="progress-label">Độ đói (50%)</span><span class="progress-value">Cao</span></div>
+        <div class="progress-meta"><span class="progress-label" id="hunger-progress-label">Độ đói (50%)</span><span class="progress-value" id="hunger-progress-value">Cao</span></div>
         <div class="progress-track"><div class="progress-fill fill-orange bar-hunger"></div></div>
       </div>
       <div class="progress-row">
@@ -533,7 +532,7 @@ html_code = """
       </div>
       <div class="needs-grid">
         <div class="needs-item"><div class="needs-item-label">Budget</div><div class="needs-item-val">30k - 50k</div></div>
-        <div class="needs-item"><div class="needs-item-label">Độ đói</div><div class="needs-item-val">Rất đói 🔥</div></div>
+        <div class="needs-item"><div class="needs-item-label">Độ đói</div><div class="needs-item-val needs-hunger-val">Rất đói 😫</div></div>
         <div class="needs-item"><div class="needs-item-label">Giao hàng</div><div class="needs-item-val">Nhanh ⚡</div></div>
         <div class="needs-item"><div class="needs-item-label">Mục tiêu</div><div class="needs-item-val">Healthy 🥗</div></div>
         <div class="needs-item"><div class="needs-item-label">Ẩm thực</div><div class="needs-item-val">Việt Nam 🇻🇳</div></div>
@@ -718,7 +717,7 @@ html_code = """
       </div>
       <div class="needs-item">
         <div class="needs-item-label">Độ đói</div>
-        <div class="needs-item-val">Rất đói</div>
+        <div class="needs-item-val needs-hunger-val">Rất đói 😫</div>
       </div>
       <div class="needs-item">
         <div class="needs-item-label">Sức khỏe</div>
@@ -1341,6 +1340,7 @@ html_code = """
   // ==========================================
   let currentScreenId = 'screen-loading'; // Biến nhớ màn hình hiện tại
   let isAnimating = false; // Khóa không cho user bấm loạn xạ lúc đang chuyển cảnh
+  let loadingTimer = null;
 
   function switchScreen(targetId) {
     // Bỏ qua nếu bấm lại đúng trang hiện tại hoặc đang trong lúc animation
@@ -1401,7 +1401,7 @@ html_code = """
   // ==========================================
   // 2. TỰ ĐỘNG CHUYỂN LOADING -> RESULT
   // ==========================================
-  setTimeout(() => {
+  loadingTimer = setTimeout(() => {
     switchScreen('screen-result');
   }, 4500);
 

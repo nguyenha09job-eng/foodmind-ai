@@ -1,6 +1,7 @@
 import streamlit as st
 import streamlit.components.v1 as components
 import re
+from pathlib import Path
 
 # --- Cấu hình ---
 st.set_page_config(
@@ -33,6 +34,8 @@ def extract_html(filepath):
         return match.group(1)
     return None
 
+BASE_DIR = Path(__file__).resolve().parent
+
 # --- Trích xuất phần <style> và <body> từ HTML ---
 def split_html(html_str):
     style_match = re.search(r'<style>(.*?)</style>', html_str, re.DOTALL)
@@ -42,14 +45,14 @@ def split_html(html_str):
     return style.strip(), body.strip()
 
 # --- Đọc HTML từ 6 file gốc ---
-html_splash   = extract_html('/Users/thanhha/Documents/AI/foodmind_app.py')
-html_login    = extract_html('/Users/thanhha/Documents/AI/foodmind_app1.py')
-html_register = extract_html('/Users/thanhha/Documents/AI/foodmind_app2.py')
-html_home     = extract_html('/Users/thanhha/Documents/AI/foodmind_app3.py')
-html_budget   = extract_html('/Users/thanhha/Documents/AI/foodmind_app4.py')
-html_hunger   = extract_html('/Users/thanhha/Documents/AI/foodmind_app5.py')
-html_diet     = extract_html('/Users/thanhha/Documents/AI/foodmind_app6.py')
-html_app7     = extract_html('/Users/thanhha/Documents/AI/foodmind_app7.py')
+html_splash   = extract_html(BASE_DIR / 'foodmind_app.py')
+html_login    = extract_html(BASE_DIR / 'foodmind_app1.py')
+html_register = extract_html(BASE_DIR / 'foodmind_app2.py')
+html_home     = extract_html(BASE_DIR / 'foodmind_app3.py')
+html_budget   = extract_html(BASE_DIR / 'foodmind_app4.py')
+html_hunger   = extract_html(BASE_DIR / 'foodmind_app5.py')
+html_diet     = extract_html(BASE_DIR / 'foodmind_app6.py')
+html_app7     = extract_html(BASE_DIR / 'foodmind_app7.py')
 
 if not html_splash or not html_login or not html_register or not html_home or not html_budget or not html_hunger or not html_diet or not html_app7:
     st.error("Không thể đọc file foodmind_app.py, foodmind_app1.py, foodmind_app2.py, foodmind_app3.py, foodmind_app4.py, foodmind_app5.py, foodmind_app6.py hoặc foodmind_app7.py")
@@ -361,7 +364,7 @@ transition_js = """
         // Xử lý nhiều trường hợp: /main, /main?..., ?script=main, main.py, etc.
         let newHref = currentHref
             .replace(/([/?&])main([/?&#]|$)/, '$1main2$2')
-            .replace(/main\.py/, 'main2.py');
+            .replace(/main\\.py/, 'main2.py');
         
         if (newHref !== currentHref) {
             window.location.href = newHref;
