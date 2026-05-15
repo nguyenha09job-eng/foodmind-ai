@@ -185,6 +185,14 @@ html_code = """
   .menu-price { font-family: 'Sora', sans-serif; font-weight: 800; color: #1a1a1a; }
   .add-btn { width: 40px; height: 40px; border-radius: 14px; background: #1a1a1a; color: #fff; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; }
   .floating-order-box { position: absolute; bottom: 30px; left: 24px; right: 24px; z-index: 50; }
+  .quick-cart-bar { width: 100%; background: #1a1a1a; color: #fff; border-radius: 24px; padding: 12px 14px; display: flex; align-items: center; gap: 14px; box-shadow: 0 12px 28px rgba(0,0,0,0.22); }
+  .cart-icon-wrap { width: 46px; height: 46px; border-radius: 16px; background: rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; }
+  .cart-count { position: absolute; top: -5px; right: -5px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: #FF5A1F; color: #fff; font-family: 'Sora', sans-serif; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; border: 2px solid #1a1a1a; }
+  .cart-summary { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .cart-label { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.6); }
+  .cart-total { font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 800; color: #fff; }
+  .order-now-btn { border: none; background: #FF5A1F; color: #fff; border-radius: 18px; padding: 14px 18px; font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 800; cursor: pointer; box-shadow: 0 8px 20px rgba(255, 90, 31, 0.35); transition: transform 0.2s; white-space: nowrap; }
+  .order-now-btn:active { transform: scale(0.96); }
   .btn-primary { width: 100%; background: #FF5A1F; color: #fff; border: none; border-radius: 24px; padding: 18px 24px; font-family: 'Sora', sans-serif; font-size: 16px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; cursor: pointer; box-shadow: 0 8px 24px rgba(255, 90, 31, 0.35); transition: transform 0.2s; }
   .btn-primary:active { transform: scale(0.98); }
   #screen-success { background: #ffffff; padding: 24px; }
@@ -857,12 +865,21 @@ html_code = """
 
   <!-- Cố định nút ở dưới cùng màn hình -->
   <div class="floating-order-box">
-    <button class="btn-primary">
-      <span>Đặt món nhanh ngay</span>
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="9 18 15 12 9 6"></polyline>
-      </svg>
-    </button>
+    <div class="quick-cart-bar">
+      <div class="cart-icon-wrap">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="21" r="1"></circle>
+          <circle cx="20" cy="21" r="1"></circle>
+          <path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h8.7a2 2 0 0 0 2-1.6L23 6H6"></path>
+        </svg>
+        <span class="cart-count">0</span>
+      </div>
+      <div class="cart-summary">
+        <span class="cart-label">Tổng cộng</span>
+        <span class="cart-total">0 đ</span>
+      </div>
+      <button class="order-now-btn">Đặt ngay</button>
+    </div>
   </div>
 
 </div>
@@ -1421,6 +1438,8 @@ html_code = """
 
   let selectedRestaurantName = 'Cơm Tấm Bà Lan';
   let detailReturnScreen = 'screen-result';
+  let cartCount = 0;
+  let cartTotal = 0;
 
   function getCurrentScreenId() {
     const visibleScreen = document.querySelector('.screen-wrapper[style*="display: flex"]');
@@ -1438,8 +1457,31 @@ html_code = """
     if (detailTitle) detailTitle.innerHTML = detail.title;
     if (detailMatch) detailMatch.textContent = detail.match;
     if (detailBg) detailBg.style.setProperty('--hero-image', detail.image);
+    resetQuickCart();
 
     switchScreen('screen-detail');
+  }
+
+  function formatVnd(amount) {
+    return amount.toLocaleString('vi-VN') + ' đ';
+  }
+
+  function updateQuickCart() {
+    const countEl = document.querySelector('#screen-detail .cart-count');
+    const totalEl = document.querySelector('#screen-detail .cart-total');
+    if (countEl) countEl.textContent = cartCount;
+    if (totalEl) totalEl.textContent = formatVnd(cartTotal);
+  }
+
+  function resetQuickCart() {
+    cartCount = 0;
+    cartTotal = 0;
+    updateQuickCart();
+  }
+
+  function parseMenuPrice(priceText) {
+    const digits = (priceText || '').replace(/[^0-9]/g, '');
+    return digits ? Number(digits) : 0;
   }
 
   function showRestaurantAsMainCard(name, screenSelector) {
@@ -1621,7 +1663,18 @@ html_code = """
   // ==========================================
   // 6. TRACKING SCREEN (Bản đồ Shipper)
   // ==========================================
-  const oldOrderBtn = document.querySelector('#screen-detail .btn-primary');
+  document.querySelectorAll('#screen-detail .add-btn').forEach(addBtn => {
+    addBtn.addEventListener('click', event => {
+      event.stopPropagation();
+      const menuItem = addBtn.closest('.menu-item');
+      const price = parseMenuPrice(menuItem?.querySelector('.menu-price')?.textContent);
+      cartCount += 1;
+      cartTotal += price;
+      updateQuickCart();
+    });
+  });
+
+  const oldOrderBtn = document.querySelector('#screen-detail .order-now-btn');
   if (oldOrderBtn) {
     // Clone node để dọn dẹp các event click cũ bị trùng lặp
     const newOrderBtn = oldOrderBtn.cloneNode(true);
