@@ -7,7 +7,7 @@ from pathlib import Path as _Path
 # --- Thiết lập đường dẫn backend ---
 _sys.path.insert(0, str(_Path(__file__).resolve().parent.parent / 'mybackhurt'))
 _os.chdir(str(_Path(__file__).resolve().parent.parent / 'mybackhurt'))
-from fuzzylogic import load_data, get_recommendations, generate_daily_plan
+from fuzzylogic import load_data, get_recommendations, generate_daily_plan, get_meal_type
 
 # Cấu hình trang Streamlit
 st.set_page_config(
@@ -271,8 +271,8 @@ html_code = """
   #screen-tracking .marker-restaurant { position: absolute; top: 240px; left: 160px; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 6px; z-index: 10; }
   #screen-tracking .res-icon { background: #1a1a1a; width: 48px; height: 48px; border-radius: 16px; display: flex; justify-content: center; align-items: center; font-size: 24px; border: 3px solid #fff; box-shadow: 0 8px 16px rgba(0,0,0,0.15); }
   #screen-tracking .res-label { background: #fff; padding: 6px 14px; border-radius: 12px; font-size: 12px; font-weight: 800; font-family: 'Sora', sans-serif; color: #1a1a1a; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
-  #screen-tracking .marker-shipper { position: absolute; top: 420px; left: 160px; transform: translate(-50%, -50%); width: 52px; height: 52px; background: #FF5A1F; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 26px; border: 3px solid #fff; box-shadow: 0 4px 12px rgba(255, 90, 31, 0.4); z-index: 11; animation: bounce 1s infinite alternate; }
-  #screen-tracking .radar-pulse { position: absolute; top: 420px; left: 160px; transform: translate(-50%, -50%); width: 52px; height: 52px; border-radius: 50%; background: rgba(255, 90, 31, 0.3); border: 2px solid rgba(255, 90, 31, 0.5); z-index: 10; animation: pulse 2s infinite ease-out; }
+  #screen-tracking .marker-shipper { position: absolute; top: 250px; left: 160px; transform: translate(-50%, -50%); width: 52px; height: 52px; background: #FF5A1F; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 26px; border: 3px solid #fff; box-shadow: 0 4px 12px rgba(255, 90, 31, 0.4); z-index: 11; animation: bounce 1s infinite alternate; }
+  #screen-tracking .radar-pulse { position: absolute; top: 250px; left: 160px; transform: translate(-50%, -50%); width: 52px; height: 52px; border-radius: 50%; background: rgba(255, 90, 31, 0.3); border: 2px solid rgba(255, 90, 31, 0.5); z-index: 10; animation: pulse 2s infinite ease-out; }
   @keyframes pulse { 0% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; } }
   @keyframes bounce { 0% { transform: translate(-50%, -50%); } 100% { transform: translate(-50%, -54%); } }
   #screen-tracking .bottom-sheet { position: absolute; bottom: 0; left: 0; right: 0; background: #fff; border-radius: 40px 40px 0 0; padding: 16px 24px 32px; box-shadow: 0 -10px 40px rgba(0,0,0,0.1); z-index: 50; }
@@ -684,7 +684,7 @@ html_code = """
         <span class="cart-label">Tổng cộng</span>
         <span class="cart-total">0 đ</span>
       </div>
-      <button class="order-now-btn">Đặt ngay</button>
+      <button class="order-now-btn" type="button">Đặt ngay</button>
     </div>
   </div>
 
@@ -842,7 +842,7 @@ html_code = """
         <span class="cart-label">Tổng cộng</span>
         <span class="cart-total">0 đ</span>
       </div>
-      <button class="order-now-btn">Đặt ngay</button>
+      <button class="order-now-btn" type="button">Đặt ngay</button>
     </div>
   </div>
 
@@ -1081,7 +1081,7 @@ html_code = """
         <span class="cart-label">Tổng cộng</span>
         <span class="cart-total">0 đ</span>
       </div>
-      <button class="order-now-btn">Đặt ngay</button>
+      <button class="order-now-btn" type="button">Đặt ngay</button>
     </div>
   </div>
 
@@ -1411,6 +1411,7 @@ html_code = """
   let pendingMealId = null;
   let selectedMealId = null;
   let trackingTimerIds = [];
+  let trackingAnimationFrameId = null;
   const favoriteRestaurants = new Set();
   const mealPlanNutrition = { calories: 0, protein: 0, carbs: 0 };
   const orderedMealIds = new Set();
@@ -1463,18 +1464,46 @@ html_code = """
     return visibleScreen ? visibleScreen.id : 'screen-result';
   }
 
+  function normalizeRestaurantKey(value) {
+    return String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+  }
+
+  function findDishForRestaurant(nameOrId) {
+    var key = normalizeRestaurantKey(nameOrId);
+    var dishes = (window.foodmindAllRecalculated && window.foodmindAllRecalculated.length)
+      ? window.foodmindAllRecalculated
+      : (window.foodmindAllDishes || window.foodmindBackendResults || []);
+    return dishes.find(function(dr) {
+      return normalizeRestaurantKey(dr.restaurant_name) === key || normalizeRestaurantKey(dr.restaurant_id) === key;
+    });
+  }
+
+  function resolveRestaurantName(nameOrId, sourceEl) {
+    if (nameOrId && restaurantDetails[nameOrId]) return nameOrId;
+    var key = normalizeRestaurantKey(nameOrId);
+    var matchedRestaurant = (window.foodmindRestaurants || []).find(function(rst) {
+      return normalizeRestaurantKey(rst.name) === key || normalizeRestaurantKey(rst.restaurant_id) === key;
+    });
+    if (matchedRestaurant) return matchedRestaurant.name;
+
+    var domName = sourceEl ? sourceEl.querySelector('.res-name, .peek-name, .trend-name, .recent-name') : null;
+    if (domName && domName.textContent.trim()) return domName.textContent.trim();
+
+    var matchedDish = findDishForRestaurant(nameOrId);
+    return matchedDish ? matchedDish.restaurant_name : '';
+  }
+
   function openRestaurantDetail(name, returnScreen) {
-    if (!restaurantDetails[name] && window.foodmindAllRecalculated) {
-      var dishForRst = window.foodmindAllRecalculated.find(function(dr) {
-        return dr.restaurant_name === name;
-      });
-      if (dishForRst) {
-        restaurantDetails[name] = backendResultToDetail(dishForRst, 0);
-      }
+    var resolvedName = resolveRestaurantName(name);
+    if (!resolvedName) return;
+
+    if (!restaurantDetails[resolvedName]) {
+      var dishForRst = findDishForRestaurant(resolvedName);
+      if (dishForRst) restaurantDetails[resolvedName] = backendResultToDetail(dishForRst, 0);
     }
 
-    var firstKey = Object.keys(restaurantDetails)[0];
-    const detail = restaurantDetails[name] || (firstKey ? restaurantDetails[firstKey] : {});
+    const detail = restaurantDetails[resolvedName];
+    if (!detail) return;
     const detailTitle = document.querySelector('#screen-detail .hero-title');
     const detailMatch = document.querySelector('#screen-detail .match-box-val');
     const detailBg = document.querySelector('#screen-detail .hero-bg');
@@ -1714,12 +1743,79 @@ html_code = """
     { progress: 75, status: 'Shipper đang trên đường', eta: '3 phút nữa' },
     { progress: 100, status: 'Đơn hàng đã giao', eta: 'Đã giao' }
   ];
+  const trackingRoutePoints = [
+    { left: 160, top: 250 },
+    { left: 160, top: 320 },
+    { left: 160, top: 490 },
+    { left: 320, top: 490 },
+    { left: 320, top: 600 }
+  ];
   const trackingCheckIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
   const trackingDotIcon = '<div class="dot"></div>';
 
   function clearTrackingTimers() {
     trackingTimerIds.forEach(function(timerId) { clearTimeout(timerId); });
     trackingTimerIds = [];
+    if (trackingAnimationFrameId) {
+      cancelAnimationFrame(trackingAnimationFrameId);
+      trackingAnimationFrameId = null;
+    }
+  }
+
+  function setShipperPosition(point) {
+    const shipper = document.getElementById('shipper-btn');
+    const pulse = document.querySelector('#screen-tracking .radar-pulse');
+    [shipper, pulse].forEach(function(marker) {
+      if (!marker) return;
+      marker.style.left = point.left + 'px';
+      marker.style.top = point.top + 'px';
+    });
+  }
+
+  function getRoutePointAt(progress) {
+    const segments = [];
+    let totalLength = 0;
+    for (let i = 0; i < trackingRoutePoints.length - 1; i++) {
+      const start = trackingRoutePoints[i];
+      const end = trackingRoutePoints[i + 1];
+      const length = Math.hypot(end.left - start.left, end.top - start.top);
+      segments.push({ start, end, length });
+      totalLength += length;
+    }
+
+    let remaining = totalLength * Math.max(0, Math.min(1, progress));
+    for (const segment of segments) {
+      if (remaining <= segment.length) {
+        const ratio = segment.length ? remaining / segment.length : 0;
+        return {
+          left: segment.start.left + (segment.end.left - segment.start.left) * ratio,
+          top: segment.start.top + (segment.end.top - segment.start.top) * ratio
+        };
+      }
+      remaining -= segment.length;
+    }
+    return trackingRoutePoints[trackingRoutePoints.length - 1];
+  }
+
+  function animateShipperRoute(duration) {
+    const startTime = performance.now();
+    setShipperPosition(trackingRoutePoints[0]);
+
+    function step(now) {
+      const elapsed = now - startTime;
+      const rawProgress = Math.min(elapsed / duration, 1);
+      const easedProgress = rawProgress < 0.5
+        ? 2 * rawProgress * rawProgress
+        : 1 - Math.pow(-2 * rawProgress + 2, 2) / 2;
+      setShipperPosition(getRoutePointAt(easedProgress));
+      if (rawProgress < 1) {
+        trackingAnimationFrameId = requestAnimationFrame(step);
+      } else {
+        trackingAnimationFrameId = null;
+      }
+    }
+
+    trackingAnimationFrameId = requestAnimationFrame(step);
   }
 
   function updateTrackingTimeline(activeIndex) {
@@ -1753,6 +1849,7 @@ html_code = """
   function finishTrackingOrder() {
     clearTrackingTimers();
     updateTrackingTimeline(trackingSteps.length - 1);
+    setShipperPosition(trackingRoutePoints[trackingRoutePoints.length - 1]);
     completeCurrentOrder();
     switchScreen('screen-success');
   }
@@ -1760,6 +1857,9 @@ html_code = """
   function startTrackingTimeline() {
     clearTrackingTimers();
     updateTrackingTimeline(0);
+    setShipperPosition(trackingRoutePoints[0]);
+    const routeDuration = (trackingSteps.length - 1) * 1400;
+    animateShipperRoute(routeDuration);
     trackingSteps.slice(1).forEach(function(_, index) {
       const stepIndex = index + 1;
       const timerId = setTimeout(function() {
@@ -1774,7 +1874,6 @@ html_code = """
   }
 
   function startDeliveryTracking() {
-    window.parent.postMessage({type:'foodmind-show-tracking'}, '*');
     switchScreen('screen-tracking');
     setTimeout(startTrackingTimeline, 120);
   }
@@ -1935,7 +2034,13 @@ html_code = """
   document.addEventListener('click', event => {
     const mapRestaurant = event.target.closest('#screen-map .res-card, #screen-map .map-marker');
     if (mapRestaurant) {
-      openRestaurantDetail(mapRestaurant.dataset.restaurant, 'screen-map');
+      event.preventDefault();
+      event.stopPropagation();
+      const restaurantName = resolveRestaurantName(
+        mapRestaurant.dataset.restaurant || mapRestaurant.dataset.id,
+        mapRestaurant
+      );
+      if (restaurantName) openRestaurantDetail(restaurantName, 'screen-map');
     }
   });
 
@@ -2075,6 +2180,7 @@ html_code = """
 
     const singlesOrderBtn = event.target.closest('#screen-result1 .order-now-btn');
     if (singlesOrderBtn && cartItems.length) {
+      event.preventDefault();
       event.stopPropagation();
       activeCartPanelId = null;
       updateQuickCart();
@@ -2123,6 +2229,7 @@ html_code = """
     oldOrderBtn.parentNode.replaceChild(newOrderBtn, oldOrderBtn);
     
     newOrderBtn.addEventListener('click', event => {
+      event.preventDefault();
       event.stopPropagation();
       if (!cartItems.length) return;
       activeCartPanelId = null;
@@ -2184,7 +2291,11 @@ html_code = """
 
   const mealPlanOrderBtn = document.querySelector('#screen-mealplan .mealplan-cart-box .order-now-btn');
   if (mealPlanOrderBtn) {
-    mealPlanOrderBtn.addEventListener('click', startMealPlanOrder);
+    mealPlanOrderBtn.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      startMealPlanOrder();
+    });
   }
 
   window.userPrefs = {
@@ -2490,18 +2601,50 @@ html_code = """
   function populateDetailMenu(restaurantName) {
     var container = document.getElementById('detail-menu-list');
     if (!container) return;
-    if (!window.foodmindBackendResults || !window.foodmindBackendResults.length) return;
+    var allDishes = window.foodmindAllDishes && window.foodmindAllDishes.length
+      ? window.foodmindAllDishes
+      : (window.foodmindBackendResults || []);
+    if (!allDishes.length) return;
 
-    var restaurantDishes = window.foodmindBackendResults.filter(function(r) {
-      return r.restaurant_name === restaurantName;
-    });
-
-    container.innerHTML = '';
-    if (restaurantDishes.length === 0) {
-      container.innerHTML = '<div style="padding:24px;text-align:center;color:#999;">Chưa có món nào từ quán này</div>';
-      return;
+    function normalizeText(value) {
+      return String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
     }
 
+    var requestedName = normalizeText(restaurantName);
+    var restaurantDishes = allDishes.filter(function(r) {
+      return normalizeText(r.restaurant_name) === requestedName;
+    });
+
+    if (restaurantDishes.length === 0) {
+      var keywordMap = {
+        'sushi': ['sushi', 'sashimi', 'jp'],
+        'healthy': ['salad', 'healthy', 'poke', 'wrap'],
+        'bowl': ['salad', 'healthy', 'poke', 'wrap'],
+        'pizza': ['pizza'],
+        'jollibee': ['fried_chicken', 'chicken', 'ga ran'],
+        'bun': ['bun', 'bun_bo', 'pho', 'noodle'],
+        'pho': ['pho', 'noodle'],
+        'com': ['rice', 'com', 'tam']
+      };
+      var keywords = [];
+      Object.keys(keywordMap).forEach(function(key) {
+        if (requestedName.includes(key)) keywords = keywords.concat(keywordMap[key]);
+      });
+      if (keywords.length) {
+        restaurantDishes = allDishes.filter(function(r) {
+          var haystack = normalizeText([r.dish_name, r.food_category, r.cuisine_type, r.meal_type].join(' '));
+          return keywords.some(function(keyword) { return haystack.includes(normalizeText(keyword)); });
+        });
+      }
+    }
+
+    if (restaurantDishes.length === 0) {
+      restaurantDishes = allDishes.slice(0, 6);
+    }
+
+    restaurantDishes = restaurantDishes.slice(0, 8);
+
+    container.innerHTML = '';
     restaurantDishes.forEach(function(r) {
       var priceFormatted = Number(r.price).toLocaleString('vi-VN') + ' đ';
       var imgSrc = r.image_url || 'https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?auto=format&fit=crop&w=150&q=80';
@@ -2653,7 +2796,7 @@ html_code = """
       var rating = (r.rating || 4.0).toFixed(1);
       
       var address = r.address || '';
-      var districtMatch = address.match(/Quận \d+|Q\.\d+|Quận [a-zA-Z\s]+/i);
+      var districtMatch = address.match(/Quận \\d+|Q\\.\\d+|Quận [a-zA-Z\\s]+/i);
       var district = districtMatch ? districtMatch[0] : 'Quận 1';
 
       var card = document.createElement('div');
@@ -2740,6 +2883,29 @@ try:
             'address': str(row.get('address', ''))
         })
 
+    _restaurant_name_by_id = {
+        str(row['restaurant_id']): str(row['name'])
+        for _, row in _restaurants_df.iterrows()
+    }
+    _all_dishes_json = []
+    for _, row in _dishes_df.iterrows():
+        _rid = str(row.get('restaurant_id', ''))
+        _all_dishes_json.append({
+            'dish_id': str(row.get('dish_id', '')),
+            'dish_name': str(row.get('name', '')),
+            'restaurant_id': _rid,
+            'restaurant_name': _restaurant_name_by_id.get(_rid, ''),
+            'price': int(row.get('price', 0)) if _pd.notna(row.get('price')) else 0,
+            'calories': int(float(row.get('calories', 0))) if _pd.notna(row.get('calories')) else 0,
+            'protein_g': int(float(row.get('protein_g', 0))) if _pd.notna(row.get('protein_g')) else 0,
+            'carb_g': int(float(row.get('carb_g', 0))) if _pd.notna(row.get('carb_g')) else 0,
+            'fat_g': int(float(row.get('fat_g', 0))) if _pd.notna(row.get('fat_g')) else 0,
+            'food_category': str(row.get('food_category', '')),
+            'cuisine_type': str(row.get('cuisine_type', '')),
+            'image_url': str(row.get('image_url', '')),
+            'meal_type': get_meal_type(row.get('food_category', ''))
+        })
+
     # --- window.foodmindMealPlan (kế hoạch bữa ăn) ---
     _meal_plan = generate_daily_plan(_default_inputs, _config, _dishes_df, _restaurants_df)
     _meal_plan_json = {}
@@ -2801,6 +2967,8 @@ try:
     _inject_script = (
         '<script>'
         'window.foodmindBackendResults = ' + _json.dumps(_backend_results_json, ensure_ascii=False) + ';'
+        'window.foodmindAllDishes = ' + _json.dumps(_all_dishes_json, ensure_ascii=False) + ';'
+        'window.foodmindRawResults = window.foodmindAllDishes;'
         'window.foodmindRestaurants = ' + _json.dumps(_restaurants_json, ensure_ascii=False) + ';'
         'window.foodmindMealPlan = ' + _json.dumps(_meal_plan_json, ensure_ascii=False) + ';'
         'window.foodmindMealAlternatives = ' + _json.dumps(_meal_alternatives, ensure_ascii=False) + ';'
