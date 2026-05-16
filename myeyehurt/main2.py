@@ -2791,8 +2791,31 @@ html_code = """
     var top5 = sortedRests.slice(0, 5);
     container.innerHTML = ''; // clear hardcoded
 
+    function getDiscoverRestaurantImage(r) {
+      var name = normalizeRestaurantKey(r.name);
+      if (name.includes('banh mi') || name.includes('huynh hoa')) {
+        return 'https://commons.wikimedia.org/wiki/Special:FilePath/Vietnamese%20B%C3%A1nh%20m%C3%AC%20(Banh%20Mi)%20Sandwich.jpg?width=600';
+      }
+      if (name.includes('com tam') || name.includes('ba ghien')) {
+        return 'https://commons.wikimedia.org/wiki/Special:FilePath/C%C6%A1m%20t%E1%BA%A5m%20s%C6%B0%E1%BB%9Dn%20c%C3%A2y.JPG?width=600';
+      }
+      if (name.includes('sushi')) {
+        return 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=300&q=80';
+      }
+      if (name.includes('pizza')) {
+        return 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=300&q=80';
+      }
+      if (name.includes('healthy') || name.includes('salad') || name.includes('chay')) {
+        return 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=300&q=80';
+      }
+      if (r.cover_image_url && !r.cover_image_url.includes('photo-1582878826629-29b7ad1cb461')) {
+        return r.cover_image_url;
+      }
+      return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80';
+    }
+
     top5.forEach(function(r) {
-      var img = r.cover_image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80';
+      var img = getDiscoverRestaurantImage(r);
       var rating = (r.rating || 4.0).toFixed(1);
       
       var address = r.address || '';
@@ -2803,7 +2826,7 @@ html_code = """
       card.className = 'trend-card';
       card.setAttribute('data-restaurant', r.name);
       card.innerHTML = '<div class="trend-img-wrap">' +
-          '<img src="' + img + '" alt="' + r.name.replace(/"/g, '&quot;') + '" class="trend-img">' +
+          '<img src="' + img + '" alt="' + r.name.replace(/"/g, '&quot;') + '" class="trend-img" onerror="this.src=\'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80\'">' +
           '<div class="rating-badge"><span style="color:#FFD600">★</span> ' + rating + '</div>' +
         '</div>' +
         '<div class="trend-info">' +
