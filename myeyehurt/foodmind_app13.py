@@ -161,71 +161,7 @@ body {
   z-index: 1;
 }
 
-.marker-restaurant {
-  position: absolute;
-  top: 240px; left: 160px;
-  transform: translate(-50%, -50%);
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-  z-index: 10;
-}
 
-.res-icon {
-  background: #1a1a1a;
-  width: 48px; height: 48px;
-  border-radius: 16px;
-  display: flex; justify-content: center; align-items: center;
-  font-size: 24px;
-  border: 3px solid #fff;
-  box-shadow: 0 8px 16px rgba(0,0,0,0.15);
-}
-
-.res-label {
-  background: #fff;
-  padding: 6px 14px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 800;
-  font-family: 'Sora', sans-serif;
-  color: #1a1a1a;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-}
-
-.marker-shipper {
-  position: absolute;
-  top: 420px; left: 160px;
-  transform: translate(-50%, -50%);
-  width: 52px; height: 52px;
-  background: #FF5A1F;
-  border-radius: 50%;
-  display: flex; justify-content: center; align-items: center;
-  font-size: 26px;
-  border: 3px solid #fff;
-  box-shadow: 0 4px 12px rgba(255, 90, 31, 0.4);
-  z-index: 11;
-  animation: bounce 1s infinite alternate;
-}
-
-.radar-pulse {
-  position: absolute;
-  top: 420px; left: 160px;
-  transform: translate(-50%, -50%);
-  width: 52px; height: 52px;
-  border-radius: 50%;
-  background: rgba(255, 90, 31, 0.3);
-  border: 2px solid rgba(255, 90, 31, 0.5);
-  z-index: 10;
-  animation: pulse 2s infinite ease-out;
-}
-
-@keyframes pulse {
-  0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-  100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
-}
-
-@keyframes bounce {
-  0% { transform: translate(-50%, -50%); }
-  100% { transform: translate(-50%, -54%); }
-}
 
 .bottom-sheet {
   position: absolute;
@@ -319,14 +255,14 @@ body {
   z-index: 1;
 }
 
-.timeline-wrap::after {
-  content: '';
+.progress-line {
   position: absolute;
   top: 15px; left: 20px;
-  width: 75%;
+  width: 0%;
   height: 2px;
   background: #00C853;
   z-index: 1;
+  transition: width 0.5s linear;
 }
 
 .step {
@@ -397,13 +333,7 @@ body {
     </div>
   </div>
 
-  <div class="marker-restaurant">
-    <div class="res-icon">🍱</div>
-    <div class="res-label">__REST_NAME__</div>
-  </div>
 
-  <div class="radar-pulse"></div>
-  <div class="marker-shipper">🛵</div>
 
   <div class="bottom-sheet">
     <div class="drag-handle"></div>
@@ -421,20 +351,18 @@ body {
         </div>
       </div>
       <div class="driver-actions">
-        <div class="action-btn btn-chat">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-        </div>
         <div class="action-btn btn-call">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
         </div>
       </div>
     </div>
 
-    <div class="timeline-wrap">
+    <div class="timeline-wrap" id="tracking-timeline">
+      <div class="progress-line" id="progress-line"></div>
       <div class="step"><div class="step-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div class="step-label">Đã xác<br>nhận</div></div>
-      <div class="step"><div class="step-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div class="step-label">Đang<br>chuẩn bị</div></div>
-      <div class="step"><div class="step-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div class="step-label">Shipper<br>nhận đơn</div></div>
-      <div class="step"><div class="step-icon current"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div class="step-label">Đang giao</div></div>
+      <div class="step inactive"><div class="step-icon inactive"><div class="dot"></div></div><div class="step-label">Đang<br>chuẩn bị</div></div>
+      <div class="step inactive"><div class="step-icon inactive"><div class="dot"></div></div><div class="step-label">Shipper<br>nhận đơn</div></div>
+      <div class="step inactive"><div class="step-icon inactive"><div class="dot"></div></div><div class="step-label">Đang giao</div></div>
       <div class="step inactive"><div class="step-icon inactive"><div class="dot"></div></div><div class="step-label">Đã giao</div></div>
     </div>
 
@@ -451,6 +379,75 @@ body {
         mapIframe.setAttribute('allow', 'geolocation');
         mapWrapper.appendChild(mapIframe);
     }
+
+    // Progress bar animation logic
+    var duration = 30000; // 30 seconds
+    var startTime = performance.now();
+    var progressLine = document.getElementById('progress-line');
+    var steps = document.querySelectorAll('#tracking-timeline .step');
+    var statusText = document.querySelector('.status-text');
+
+    var svgCheck = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+    var dotDiv = '<div class="dot"></div>';
+
+    var statusMessages = [
+        "Đơn hàng đã được xác nhận",
+        "Nhà hàng đang chuẩn bị món",
+        "Shipper đã nhận được món",
+        "Shipper đang trên đường giao đến bạn",
+        "Đơn hàng đã giao thành công!"
+    ];
+
+    function updateStep(index, isCurrent, isDone) {
+        var step = steps[index];
+        if (!step) return;
+        var iconDiv = step.querySelector('.step-icon');
+        
+        if (isDone) {
+            step.classList.remove('inactive');
+            iconDiv.classList.remove('inactive', 'current');
+            iconDiv.innerHTML = svgCheck;
+        } else if (isCurrent) {
+            step.classList.remove('inactive');
+            iconDiv.classList.remove('inactive');
+            iconDiv.classList.add('current');
+            iconDiv.innerHTML = svgCheck;
+        } else {
+            step.classList.add('inactive');
+            iconDiv.classList.add('inactive');
+            iconDiv.classList.remove('current');
+            iconDiv.innerHTML = dotDiv;
+        }
+    }
+
+    function animate(now) {
+        var elapsed = now - startTime;
+        var pct = Math.min(100, (elapsed / duration) * 100);
+        progressLine.style.width = pct + '%';
+
+        var stage = Math.floor(pct / 25); // 0, 1, 2, 3, 4
+        stage = Math.min(4, stage);
+
+        for (var i = 0; i < 5; i++) {
+            if (i < stage) {
+                updateStep(i, false, true); // done
+            } else if (i === stage) {
+                updateStep(i, true, false); // current
+            } else {
+                updateStep(i, false, false); // inactive
+            }
+        }
+
+        if (statusText) {
+            statusText.textContent = statusMessages[stage];
+        }
+
+        if (pct < 100) {
+            requestAnimationFrame(animate);
+        }
+    }
+
+    requestAnimationFrame(animate);
 })();
 </script>
 

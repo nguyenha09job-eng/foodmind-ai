@@ -10,6 +10,7 @@ from pathlib import Path as _Path
 _sys.path.insert(0, str(_Path(__file__).resolve().parent.parent / 'mybackhurt'))
 from fuzzylogic import get_nearby_restaurants_for_map
 import folium as _folium
+from geopy.distance import geodesic as _geodesic
 
 # --- Cấu hình ---
 st.set_page_config(
@@ -113,6 +114,7 @@ html_budget   = extract_html(BASE_DIR / "foodmind_app4.py")
 html_hunger   = extract_html(BASE_DIR / "foodmind_app5.py")
 html_diet     = extract_html(BASE_DIR / "foodmind_app6.py")
 html_app7     = extract_html(BASE_DIR / "foodmind_app7.py")
+html_app13    = extract_html(BASE_DIR / "foodmind_app13.py")
 html_results  = extract_html(BASE_DIR / "main2.py")
 html_map      = extract_html(BASE_DIR / "foodmind_app16.py")
 
@@ -125,6 +127,7 @@ html_files = {
     "foodmind_app5.py": html_hunger,
     "foodmind_app6.py": html_diet,
     "foodmind_app7.py": html_app7,
+    "foodmind_app13.py": html_app13,
     "main2.py": html_results,
     "foodmind_app16.py": html_map,
 }
@@ -167,6 +170,33 @@ html_map = html_map.replace('USER_LNG_PLACEHOLDER', str(_MAP_USER_LNG))
 html_map = html_map.replace('FOLIUM_PLACEHOLDER', '`' + _FOLIUM_JS_SAFE + '`')
 
 style_map,      body_map      = split_html(html_map)
+
+# --- Tạo Tracking map và thay placeholder cho html_app13 (từ foodmind_app13) ---
+if html_app13:
+    _tracking_target = _map_restaurants[0] if _map_restaurants else {'name': 'Quán ăn', 'lat': 10.765, 'lng': 106.672, 'distance_str': '~1 km', 'rating': 4.5, 'avg_prep_time': 15}
+    _TARGET_LAT, _TARGET_LNG = _tracking_target['lat'], _tracking_target['lng']
+    _SHIPPER_LAT = _MAP_USER_LAT + (_TARGET_LAT - _MAP_USER_LAT) * 0.55
+    _SHIPPER_LNG = _MAP_USER_LNG + (_TARGET_LNG - _MAP_USER_LNG) * 0.55
+    _dist_km = _geodesic((_MAP_USER_LAT, _MAP_USER_LNG), (_TARGET_LAT, _TARGET_LNG)).kilometers
+    _ETA_MIN = int(_dist_km * 4 + _tracking_target.get('avg_prep_time', 15) + 5)
+    _TRACKING_REST_NAME = _tracking_target['name']
+
+    _tm = _folium.Map(location=[_SHIPPER_LAT, _SHIPPER_LNG], zoom_start=15, control_scale=True, tiles='OpenStreetMap')
+    _folium.Marker(location=[_MAP_USER_LAT, _MAP_USER_LNG], popup=_folium.Popup("📍 Vị trí của bạn", max_width=200), icon=_folium.Icon(color="blue", icon="home", prefix="fa")).add_to(_tm)
+    _folium.Marker(location=[_TARGET_LAT, _TARGET_LNG], popup=_folium.Popup(f"🏪 {_TRACKING_REST_NAME}", max_width=200), icon=_folium.Icon(color="red", icon="cutlery", prefix="fa")).add_to(_tm)
+    _folium.Marker(location=[_SHIPPER_LAT, _SHIPPER_LNG], popup=_folium.Popup("🛵 Shipper đang trên đường", max_width=200), icon=_folium.Icon(color="orange", icon="motorcycle", prefix="fa")).add_to(_tm)
+    _folium.PolyLine(locations=[[_TARGET_LAT, _TARGET_LNG], [_SHIPPER_LAT, _SHIPPER_LNG], [_MAP_USER_LAT, _MAP_USER_LNG]], color="#FF5A1F", weight=5, opacity=0.8).add_to(_tm)
+    _tm.fit_bounds([[min(_MAP_USER_LAT, _TARGET_LAT), min(_MAP_USER_LNG, _TARGET_LNG)], [max(_MAP_USER_LAT, _TARGET_LAT), max(_MAP_USER_LNG, _TARGET_LNG)]], padding=[40, 40])
+
+    _TRACKING_FOLIUM_HTML = _tm.get_root().render()
+    _TRACKING_FOLIUM_HTML = _TRACKING_FOLIUM_HTML.replace('</head>', '<meta name="viewport" content="width=device-width, initial-scale=1.0"><style>html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;}.folium-map{width:100%!important;height:100%!important;position:absolute;top:0;left:0;}</style></head>')
+    _TRACKING_FOLIUM_JS_SAFE = _TRACKING_FOLIUM_HTML.replace('\\', '\\\\').replace('`', '\\`').replace('$', '\\$').replace('</', '<\\/')
+
+    html_app13 = html_app13.replace('__ETA_MIN__', str(_ETA_MIN))
+    html_app13 = html_app13.replace('__REST_NAME__', str(_TRACKING_REST_NAME))
+    html_app13 = html_app13.replace('__FOLIUM_HTML__', _TRACKING_FOLIUM_JS_SAFE)
+
+style_app13,     body_app13     = split_html(html_app13)
 
 # --- Sửa onclick để gọi JavaScript chuyển trang ---
 body_splash = body_splash.replace(
@@ -580,19 +610,11 @@ transition_js = """
     window.switchToTrackingFromResults = function() {
         var onboardingView = document.getElementById('onboarding-view');
         var resultsView = document.getElementById('results-view');
+        var trackingView = document.getElementById('tracking-view');
 
         if (resultsView) resultsView.style.display = 'none';
-        if (onboardingView) onboardingView.style.display = 'flex';
-
-        [splashScreen, loginScreen, registerScreen, homeScreen, budgetScreen, hungerScreen, dietScreen, app7Screen].forEach(function(screen) {
-            if (screen) screen.classList.remove('active', 'just-entered');
-        });
-        if (app7Screen) {
-            app7Screen.classList.add('active', 'just-entered');
-            setTimeout(function() {
-                app7Screen.classList.remove('just-entered');
-            }, 400);
-        }
+        if (onboardingView) onboardingView.style.display = 'none';
+        if (trackingView) trackingView.style.display = 'flex';
     };
 
     window.addEventListener('message', function(event) {
@@ -600,6 +622,11 @@ transition_js = """
             window.switchToHomeFromResults();
         } else if (event.data && event.data.type === 'foodmind-show-tracking') {
             window.switchToTrackingFromResults();
+        } else if (event.data && event.data.type === 'foodmind-back-from-tracking') {
+            var trackingView = document.getElementById('tracking-view');
+            var resultsView = document.getElementById('results-view');
+            if (trackingView) trackingView.style.display = 'none';
+            if (resultsView) resultsView.style.display = 'flex';
         }
     });
 
@@ -721,6 +748,7 @@ STYLE_BUDGET_PLACEHOLDER
 STYLE_HUNGER_PLACEHOLDER
 STYLE_DIET_PLACEHOLDER
 STYLE_APP7_PLACEHOLDER
+STYLE_APP13_PLACEHOLDER
 TRANSITION_CSS_PLACEHOLDER
 </style>
 </head>
@@ -760,6 +788,14 @@ BODY_APP7_PLACEHOLDER
     <iframe class="result-frame" id="main2-frame" title="FoodMind AI Results"></iframe>
 </div>
 <textarea id="main2-template" hidden>RESULT_HTML_PLACEHOLDER</textarea>
+
+<div class="app-view" id="tracking-view" style="display:none;">
+    <div class="screens-wrapper">
+        <div class="screen active" id="screen-app13">
+BODY_APP13_PLACEHOLDER
+        </div>
+    </div>
+</div>
 
 TRANSITION_JS_PLACEHOLDER
 
@@ -1092,6 +1128,7 @@ style_hunger   = scope_css(style_hunger,   'screen-hunger')
 style_diet     = scope_css(style_diet,     'screen-diet')
 style_app7     = scope_css(style_app7,     'screen-app7')
 style_app7    += _WEATHER_CSS
+style_app13    = scope_css(style_app13,    'screen-app13')
 html_results   = remove_home_top_action_icons(html_results)
 html_results   = sync_result_tab_indicator(html_results)
 html_results   = add_needs_panel_toggle(html_results)
@@ -1269,6 +1306,7 @@ combined_html = combined_html.replace('STYLE_BUDGET_PLACEHOLDER', style_budget)
 combined_html = combined_html.replace('STYLE_HUNGER_PLACEHOLDER', style_hunger)
 combined_html = combined_html.replace('STYLE_DIET_PLACEHOLDER', style_diet)
 combined_html = combined_html.replace('STYLE_APP7_PLACEHOLDER', style_app7)
+combined_html = combined_html.replace('STYLE_APP13_PLACEHOLDER', style_app13)
 combined_html = combined_html.replace('TRANSITION_CSS_PLACEHOLDER', transition_css)
 combined_html = combined_html.replace('BODY_SPLASH_PLACEHOLDER', body_splash)
 combined_html = combined_html.replace('BODY_LOGIN_PLACEHOLDER', body_login)
@@ -1278,6 +1316,7 @@ combined_html = combined_html.replace('BODY_BUDGET_PLACEHOLDER', body_budget)
 combined_html = combined_html.replace('BODY_HUNGER_PLACEHOLDER', body_hunger)
 combined_html = combined_html.replace('BODY_DIET_PLACEHOLDER', body_diet)
 combined_html = combined_html.replace('BODY_APP7_PLACEHOLDER', body_app7)
+combined_html = combined_html.replace('BODY_APP13_PLACEHOLDER', body_app13)
 combined_html = combined_html.replace('RESULT_HTML_PLACEHOLDER', html.escape(html_results, quote=False))
 combined_html = combined_html.replace('TRANSITION_JS_PLACEHOLDER', transition_js)
 combined_html = apply_app_font(combined_html)

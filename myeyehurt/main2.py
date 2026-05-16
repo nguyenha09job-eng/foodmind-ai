@@ -1874,12 +1874,14 @@ html_code = """
   }
 
   function startDeliveryTracking() {
-    switchScreen('screen-tracking');
-    setTimeout(startTrackingTimeline, 120);
+    window.parent.postMessage({ type: 'foodmind-show-tracking' }, '*');
   }
 
   function startMealPlanOrder() {
-    if (!selectedMealId) return;
+    if (!selectedMealId) {
+      alert("Vui lòng chọn món trước khi đặt!");
+      return;
+    }
     pendingMealId = selectedMealId;
     activeOrderContext = 'mealplan';
     startDeliveryTracking();
@@ -2231,7 +2233,10 @@ html_code = """
     newOrderBtn.addEventListener('click', event => {
       event.preventDefault();
       event.stopPropagation();
-      if (!cartItems.length) return;
+      if (!cartItems || cartItems.length === 0) {
+        alert("Vui lòng thêm món vào giỏ hàng trước khi đặt!");
+        return;
+      }
       activeCartPanelId = null;
       updateQuickCart();
       activeOrderContext = newOrderBtn.closest('#screen-result1') ? 'singles' : 'detail';

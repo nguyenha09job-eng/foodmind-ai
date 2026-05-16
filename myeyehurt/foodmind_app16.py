@@ -457,14 +457,7 @@ body {
 
   <div class="map-iframe-wrapper" id="map-wrapper"></div>
 
-  <div class="search-area">
-    <div class="search-box">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-      </svg>
-      <input type="text" class="search-input" placeholder="Tìm kiếm quán gần đây..." oninput="filterRestaurants()">
-    </div>
-  </div>
+  <!-- Removed search area -->
 
   <div class="user-dot-wrapper">
     <div class="user-pulse"></div>
@@ -540,7 +533,7 @@ function lngToX(lng) {
 }
 
 function buildCardHTML(r) {
-    return '<div class="res-card" data-id="' + r.restaurant_id + '">'
+    return '<div class="res-card" data-restaurant="' + r.name + '">'
         + '<div class="res-img-box">' + (r.emoji || '🍽️') + '</div>'
         + '<div class="res-info">'
         + '<div class="res-name">' + r.name + '</div>'
