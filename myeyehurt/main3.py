@@ -607,6 +607,114 @@ transition_js = """
         }
     };
 
+    var trackingCompletionTimer = null;
+    var trackingAnimationFrame = null;
+    var trackingDurationMs = 30000;
+
+    function updateTrackingStep(step, iconHtml, dotHtml, mode) {
+        if (!step) return;
+        var icon = step.querySelector('.step-icon');
+        step.classList.toggle('inactive', mode === 'inactive');
+        if (!icon) return;
+        icon.classList.remove('inactive', 'current');
+        if (mode === 'inactive') {
+            icon.classList.add('inactive');
+            icon.innerHTML = dotHtml;
+        } else {
+            if (mode === 'current') icon.classList.add('current');
+            icon.innerHTML = iconHtml;
+        }
+    }
+
+    function setTrackingProgress(pct) {
+        var trackingView = document.getElementById('tracking-view');
+        if (!trackingView) return;
+        var progressLine = trackingView.querySelector('#progress-line');
+        var steps = trackingView.querySelectorAll('#tracking-timeline .step');
+        var statusText = trackingView.querySelector('.status-text');
+        var etaTime = trackingView.querySelector('.eta-time');
+        var iconHtml = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+        var dotHtml = '<div class="dot"></div>';
+        var statusMessages = [
+            'Đơn hàng đã được xác nhận',
+            'Nhà hàng đang chuẩn bị món',
+            'Shipper đã nhận được món',
+            'Shipper đang trên đường giao đến bạn',
+            'Đơn hàng đã giao thành công!'
+        ];
+        var etaMessages = ['12 phút nữa', '9 phút nữa', '6 phút nữa', '3 phút nữa', 'Đã giao'];
+        var stage = Math.min(4, Math.floor(Math.max(0, pct) / 25));
+
+        if (progressLine) progressLine.style.width = Math.max(0, Math.min(100, pct)) + '%';
+        if (statusText) statusText.textContent = statusMessages[stage];
+        if (etaTime) etaTime.textContent = etaMessages[stage];
+
+        for (var i = 0; i < steps.length; i++) {
+            if (i < stage) updateTrackingStep(steps[i], iconHtml, dotHtml, 'done');
+            else if (i === stage) updateTrackingStep(steps[i], iconHtml, dotHtml, 'current');
+            else updateTrackingStep(steps[i], iconHtml, dotHtml, 'inactive');
+        }
+    }
+
+    function stopTrackingBridge() {
+        if (trackingCompletionTimer) clearTimeout(trackingCompletionTimer);
+        trackingCompletionTimer = null;
+        if (trackingAnimationFrame) cancelAnimationFrame(trackingAnimationFrame);
+        trackingAnimationFrame = null;
+    }
+
+    function finishTrackingToSuccess() {
+        stopTrackingBridge();
+        setTrackingProgress(100);
+
+        var trackingView = document.getElementById('tracking-view');
+        var resultsView = document.getElementById('results-view');
+        var resultFrame = document.getElementById('main2-frame');
+
+        if (trackingView) trackingView.style.display = 'none';
+        if (resultsView) resultsView.style.display = 'flex';
+
+        try {
+            var resultWindow = resultFrame && resultFrame.contentWindow;
+            if (resultWindow && typeof resultWindow.completeCurrentOrder === 'function') {
+                resultWindow.completeCurrentOrder();
+            }
+            if (resultWindow && typeof resultWindow.switchScreen === 'function') {
+                resultWindow.switchScreen('screen-success');
+            }
+            setTimeout(function() {
+                try {
+                    var doc = resultFrame && resultFrame.contentDocument;
+                    if (!doc) return;
+                    var successScreen = doc.getElementById('screen-success');
+                    if (!successScreen || successScreen.style.display === 'flex') return;
+                    doc.querySelectorAll('.screen-wrapper').forEach(function(screen) {
+                        screen.style.display = 'none';
+                        screen.classList.remove('page-enter', 'page-exit');
+                    });
+                    successScreen.style.display = 'flex';
+                } catch(e) {}
+            }, 450);
+        } catch(e) {}
+    }
+
+    function startTrackingBridge() {
+        stopTrackingBridge();
+        setTrackingProgress(0);
+        var startedAt = performance.now();
+
+        function tick(now) {
+            var pct = Math.min(100, ((now - startedAt) / trackingDurationMs) * 100);
+            setTrackingProgress(pct);
+            if (pct < 100) {
+                trackingAnimationFrame = requestAnimationFrame(tick);
+            }
+        }
+
+        trackingAnimationFrame = requestAnimationFrame(tick);
+        trackingCompletionTimer = setTimeout(finishTrackingToSuccess, trackingDurationMs + 350);
+    }
+
     window.switchToTrackingFromResults = function() {
         var onboardingView = document.getElementById('onboarding-view');
         var resultsView = document.getElementById('results-view');
@@ -615,6 +723,7 @@ transition_js = """
         if (resultsView) resultsView.style.display = 'none';
         if (onboardingView) onboardingView.style.display = 'none';
         if (trackingView) trackingView.style.display = 'flex';
+        startTrackingBridge();
     };
 
     window.addEventListener('message', function(event) {
@@ -625,6 +734,7 @@ transition_js = """
         } else if (event.data && event.data.type === 'foodmind-back-from-tracking') {
             var trackingView = document.getElementById('tracking-view');
             var resultsView = document.getElementById('results-view');
+            stopTrackingBridge();
             if (trackingView) trackingView.style.display = 'none';
             if (resultsView) resultsView.style.display = 'flex';
         }
