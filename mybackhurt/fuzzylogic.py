@@ -133,8 +133,8 @@ def calculate_diet_score(p, c, f, cal, user_diet_mode, config):
     if score < 0.1:
         score = 0.1
     return score
-        
-    return 0.2
+
+
 def normalize_category(raw_cat):
     raw_cat = str(raw_cat).lower().strip()
 

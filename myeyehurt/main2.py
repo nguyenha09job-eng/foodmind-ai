@@ -289,14 +289,15 @@ html_code = """
   #screen-tracking .btn-call { background: #FF5A1F; color: #fff; box-shadow: 0 4px 12px rgba(255, 90, 31, 0.3); }
   #screen-tracking .timeline-wrap { position: relative; display: flex; justify-content: space-between; margin-bottom: 32px; padding: 0 4px; }
   #screen-tracking .timeline-wrap::before { content: ''; position: absolute; top: 15px; left: 20px; right: 20px; height: 2px; background: #f0f0f0; z-index: 1; }
-  #screen-tracking .timeline-wrap::after { content: ''; position: absolute; top: 15px; left: 20px; width: 75%; height: 2px; background: #00C853; z-index: 1; }
+  #screen-tracking .timeline-wrap::after { content: ''; position: absolute; top: 15px; left: 20px; width: var(--tracking-progress, 0%); height: 2px; background: #00C853; z-index: 1; transition: width 0.45s ease; }
   #screen-tracking .step { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 10px; width: 50px; }
-  #screen-tracking .step-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #00C853; color: #fff; }
-  #screen-tracking .step-icon.current { box-shadow: 0 0 0 6px #E8F5E9; }
-  #screen-tracking .step-icon.inactive { background: #f0f0f0; }
-  #screen-tracking .step-icon.inactive .dot { width: 8px; height: 8px; background: #ccc; border-radius: 50%; }
+  #screen-tracking .step-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #f0f0f0; color: #fff; transition: background 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease; }
+  #screen-tracking .step.is-done .step-icon, #screen-tracking .step.is-current .step-icon { background: #00C853; }
+  #screen-tracking .step.is-current .step-icon { box-shadow: 0 0 0 6px #E8F5E9; transform: scale(1.04); }
+  #screen-tracking .step-icon .dot { width: 8px; height: 8px; background: #ccc; border-radius: 50%; }
+  #screen-tracking .step.is-current .step-icon .dot { background: #fff; }
   #screen-tracking .step-label { font-size: 10px; font-weight: 800; color: #1a1a1a; text-align: center; line-height: 1.3; }
-  #screen-tracking .step.inactive .step-label { color: #999; font-weight: 700; }
+  #screen-tracking .step:not(.is-done):not(.is-current) .step-label { color: #999; font-weight: 700; }
   #screen-tracking .status-text { text-align: center; font-family: 'Sora', sans-serif; font-weight: 800; font-size: 16px; color: #FF5A1F; }
   #screen-mealplan { background: #fdfdfc; z-index: 50; padding-bottom: 0; }
   #screen-mealplan .scroll-content { padding-top: 70px; padding-bottom: 120px; }
@@ -949,11 +950,11 @@ html_code = """
         <div class="step-label">Shipper<br>nhận đơn</div>
       </div>
       <div class="step">
-        <div class="step-icon current"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+        <div class="step-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
         <div class="step-label">Đang giao</div>
       </div>
-      <div class="step inactive">
-        <div class="step-icon inactive"><div class="dot"></div></div>
+      <div class="step">
+        <div class="step-icon"><div class="dot"></div></div>
         <div class="step-label">Đã giao</div>
       </div>
     </div>
@@ -1149,7 +1150,9 @@ html_code = """
       </div>
       <div class="trend-card" data-restaurant="Sushi Haru">
         <div class="trend-img-wrap">
-        <img src="https://images.unsplash.com/photo-1553621042-f6e147245754?auto=format&fit=crop&w=300&q=80" alt="Sushi Haru" class="trend-img">        </div>
+          <img src="https://images.unsplash.com/photo-1553621042-f6e147245754?auto=format&fit=crop&w=300&q=80" alt="Sushi Haru" class="trend-img">
+          <div class="rating-badge"><span style="color:#FFD600">★</span> 4.8</div>
+        </div>
         <div class="trend-info">
           <div class="trend-name">Sushi Haru</div>
           <div class="trend-loc"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> Quận 3</div>
@@ -1407,6 +1410,7 @@ html_code = """
   let activeOrderContext = 'detail';
   let pendingMealId = null;
   let selectedMealId = null;
+  let trackingTimerIds = [];
   const favoriteRestaurants = new Set();
   const mealPlanNutrition = { calories: 0, protein: 0, carbs: 0 };
   const orderedMealIds = new Set();
@@ -1435,11 +1439,7 @@ html_code = """
       if (calsEl) calsEl.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"></path></svg> ' + planData.calories + ' kcal';
       mealPlanMeals[mealId] = planData;
     });
-    if (window.foodmindMealTargets) {
-      document.querySelector('#screen-mealplan [data-nutrient="calories"]').textContent = '0 / ' + window.foodmindMealTargets.calories + ' kcal';
-      document.querySelector('#screen-mealplan [data-nutrient="protein"]').textContent = '0 / ' + window.foodmindMealTargets.protein + 'g';
-      document.querySelector('#screen-mealplan [data-nutrient="carbs"]').textContent = '0 / ' + window.foodmindMealTargets.carbs + 'g';
-    }
+    renderMealPlanNutrition();
   }
 
   function swapMealPlanItem(mealId) {
@@ -1698,6 +1698,85 @@ html_code = """
     if (totalEl) totalEl.textContent = formatVnd(meal.price);
   }
 
+  const trackingSteps = [
+    { progress: 0, status: 'Đơn hàng đã được xác nhận', eta: '12 phút nữa' },
+    { progress: 25, status: 'Quán đang chuẩn bị món', eta: '9 phút nữa' },
+    { progress: 50, status: 'Shipper đã nhận đơn', eta: '6 phút nữa' },
+    { progress: 75, status: 'Shipper đang trên đường', eta: '3 phút nữa' },
+    { progress: 100, status: 'Đơn hàng đã giao', eta: 'Đã giao' }
+  ];
+  const trackingCheckIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+  const trackingDotIcon = '<div class="dot"></div>';
+
+  function clearTrackingTimers() {
+    trackingTimerIds.forEach(function(timerId) { clearTimeout(timerId); });
+    trackingTimerIds = [];
+  }
+
+  function updateTrackingTimeline(activeIndex) {
+    const screen = document.getElementById('screen-tracking');
+    if (!screen) return;
+    const timeline = screen.querySelector('.timeline-wrap');
+    const steps = Array.from(screen.querySelectorAll('.timeline-wrap .step'));
+    const statusText = screen.querySelector('.status-text');
+    const etaTime = screen.querySelector('.eta-time');
+    const current = trackingSteps[Math.min(activeIndex, trackingSteps.length - 1)];
+
+    if (timeline) timeline.style.setProperty('--tracking-progress', current.progress + '%');
+    if (statusText) statusText.textContent = current.status;
+    if (etaTime) etaTime.textContent = current.eta;
+
+    steps.forEach(function(step, index) {
+      const icon = step.querySelector('.step-icon');
+      step.classList.remove('is-done', 'is-current');
+      if (index < activeIndex) {
+        step.classList.add('is-done');
+        if (icon) icon.innerHTML = trackingCheckIcon;
+      } else if (index === activeIndex) {
+        step.classList.add('is-current');
+        if (icon) icon.innerHTML = index === trackingSteps.length - 1 ? trackingCheckIcon : trackingDotIcon;
+      } else if (icon) {
+        icon.innerHTML = trackingDotIcon;
+      }
+    });
+  }
+
+  function finishTrackingOrder() {
+    clearTrackingTimers();
+    updateTrackingTimeline(trackingSteps.length - 1);
+    completeCurrentOrder();
+    switchScreen('screen-success');
+  }
+
+  function startTrackingTimeline() {
+    clearTrackingTimers();
+    updateTrackingTimeline(0);
+    trackingSteps.slice(1).forEach(function(_, index) {
+      const stepIndex = index + 1;
+      const timerId = setTimeout(function() {
+        updateTrackingTimeline(stepIndex);
+        if (stepIndex === trackingSteps.length - 1) {
+          const finishTimer = setTimeout(finishTrackingOrder, 650);
+          trackingTimerIds.push(finishTimer);
+        }
+      }, stepIndex * 1400);
+      trackingTimerIds.push(timerId);
+    });
+  }
+
+  function startDeliveryTracking() {
+    window.parent.postMessage({type:'foodmind-show-tracking'}, '*');
+    switchScreen('screen-tracking');
+    setTimeout(startTrackingTimeline, 120);
+  }
+
+  function startMealPlanOrder() {
+    if (!selectedMealId) return;
+    pendingMealId = selectedMealId;
+    activeOrderContext = 'mealplan';
+    startDeliveryTracking();
+  }
+
   function hideMealPlanCart() {
     const cartBox = document.querySelector('#screen-mealplan .mealplan-cart-box');
     if (cartBox) cartBox.style.display = 'none';
@@ -1711,13 +1790,17 @@ html_code = """
     const calorieFill = document.querySelector('#screen-mealplan .fill-orange');
     const proteinFill = document.querySelector('#screen-mealplan .fill-blue');
     const carbsFill = document.querySelector('#screen-mealplan .fill-green');
+    const targets = window.foodmindMealTargets || { calories: 1800, protein: 120, carbs: 250 };
+    const calories = Math.round(Number(mealPlanNutrition.calories) || 0);
+    const protein = Math.round(Number(mealPlanNutrition.protein) || 0);
+    const carbs = Math.round(Number(mealPlanNutrition.carbs) || 0);
 
-    if (calorieVal) calorieVal.textContent = mealPlanNutrition.calories + ' / 1800 kcal';
-    if (proteinVal) proteinVal.textContent = mealPlanNutrition.protein + ' / 120g';
-    if (carbsVal) carbsVal.textContent = mealPlanNutrition.carbs + ' / 250g';
-    if (calorieFill) calorieFill.style.width = Math.min(100, mealPlanNutrition.calories / 1800 * 100) + '%';
-    if (proteinFill) proteinFill.style.width = Math.min(100, mealPlanNutrition.protein / 120 * 100) + '%';
-    if (carbsFill) carbsFill.style.width = Math.min(100, mealPlanNutrition.carbs / 250 * 100) + '%';
+    if (calorieVal) calorieVal.textContent = calories + ' / ' + targets.calories + ' kcal';
+    if (proteinVal) proteinVal.textContent = protein + ' / ' + targets.protein + 'g';
+    if (carbsVal) carbsVal.textContent = carbs + ' / ' + targets.carbs + 'g';
+    if (calorieFill) calorieFill.style.width = Math.min(100, calories / targets.calories * 100) + '%';
+    if (proteinFill) proteinFill.style.width = Math.min(100, protein / targets.protein * 100) + '%';
+    if (carbsFill) carbsFill.style.width = Math.min(100, carbs / targets.carbs * 100) + '%';
   }
 
   function markMealPlanOrdered(mealId) {
@@ -1725,9 +1808,9 @@ html_code = """
     if (!meal || orderedMealIds.has(mealId)) return;
 
     orderedMealIds.add(mealId);
-    mealPlanNutrition.calories += meal.calories;
-    mealPlanNutrition.protein += meal.protein;
-    mealPlanNutrition.carbs += meal.carbs;
+    mealPlanNutrition.calories += Number(meal.calories) || 0;
+    mealPlanNutrition.protein += Number(meal.protein) || 0;
+    mealPlanNutrition.carbs += Number(meal.carbs) || 0;
     renderMealPlanNutrition();
 
     const mealCard = document.querySelector('#screen-mealplan .meal-card[data-meal-id="' + mealId + '"]');
@@ -1776,7 +1859,7 @@ html_code = """
     if (firstTag) firstTag.textContent = detail.tag || '';
     if (mealTypeBadge && detail.mealType) {
       mealTypeBadge.textContent = detail.mealType;
-      mealTypeBadge.className = 'meal-type-badge mtype-' + detail.mealType.toLowerCase().replace(/\s+/g, '-');
+      mealTypeBadge.className = 'meal-type-badge mtype-' + detail.mealType.toLowerCase().replace(/\\s+/g, '-');
     }
     if (scrollContent) scrollContent.scrollTo({ top: 140, behavior: 'smooth' });
     updateFavoriteButton();
@@ -1987,12 +2070,7 @@ html_code = """
       activeCartPanelId = null;
       updateQuickCart();
       activeOrderContext = 'singles';
-      window.parent.postMessage({type:'foodmind-show-tracking'}, '*');
-      setTimeout(() => {
-        if(document.getElementById('screen-tracking').style.display === 'flex') {
-          switchScreen('screen-success');
-        }
-      }, 5000);
+      startDeliveryTracking();
     }
   });
 
@@ -2041,14 +2119,7 @@ html_code = """
       activeCartPanelId = null;
       updateQuickCart();
       activeOrderContext = newOrderBtn.closest('#screen-result1') ? 'singles' : 'detail';
-      window.parent.postMessage({type:'foodmind-show-tracking'}, '*');
-      // Sau 5s tự nhảy sang báo thành công
-      setTimeout(() => {
-        if(document.getElementById('screen-tracking').style.display === 'flex') {
-          completeCurrentOrder();
-          switchScreen('screen-success');
-        }
-      }, 5000);
+      startDeliveryTracking();
     });
   });
 
@@ -2068,8 +2139,7 @@ html_code = """
   if (shipperMarker) {
     shipperMarker.style.cursor = 'pointer';
     shipperMarker.addEventListener('click', () => {
-      completeCurrentOrder();
-      switchScreen('screen-success');
+      finishTrackingOrder();
     });
   }
 
@@ -2091,29 +2161,21 @@ html_code = """
   // ==========================================
   
   // Nút đặt món bên Meal Plan
-  document.querySelectorAll('#screen-mealplan .btn-order').forEach(orderBtn => {
-    orderBtn.addEventListener('click', () => {
+  const mealPlanScreen = document.getElementById('screen-mealplan');
+  if (mealPlanScreen) {
+    mealPlanScreen.addEventListener('click', event => {
+      const orderBtn = event.target.closest('.btn-order');
+      if (!orderBtn || !mealPlanScreen.contains(orderBtn)) return;
       const mealId = orderBtn.dataset.mealId;
       if (!mealId || orderedMealIds.has(mealId)) return;
       selectedMealId = mealId;
       updateMealPlanCart(mealId);
     });
-  });
+  }
 
   const mealPlanOrderBtn = document.querySelector('#screen-mealplan .mealplan-cart-box .order-now-btn');
   if (mealPlanOrderBtn) {
-    mealPlanOrderBtn.addEventListener('click', () => {
-      if (!selectedMealId) return;
-      pendingMealId = selectedMealId;
-      activeOrderContext = 'mealplan';
-      window.parent.postMessage({type:'foodmind-show-tracking'}, '*');
-      setTimeout(() => {
-        if(document.getElementById('screen-tracking').style.display === 'flex' && activeOrderContext === 'mealplan') {
-          completeCurrentOrder();
-          switchScreen('screen-success');
-        }
-      }, 5000);
-    });
+    mealPlanOrderBtn.addEventListener('click', startMealPlanOrder);
   }
 
   window.userPrefs = {
@@ -2346,7 +2408,7 @@ html_code = """
           if (firstTag) firstTag.textContent = detail.tag;
           if (mealTypeBadge) {
             mealTypeBadge.textContent = detail.mealType;
-            mealTypeBadge.className = 'meal-type-badge mtype-' + detail.mealType.toLowerCase().replace(/\s+/g, '-');
+            mealTypeBadge.className = 'meal-type-badge mtype-' + detail.mealType.toLowerCase().replace(/\\s+/g, '-');
           }
         }
       }
