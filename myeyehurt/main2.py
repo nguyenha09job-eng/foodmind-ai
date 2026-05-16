@@ -304,9 +304,9 @@ html_code = """
   #screen-mealplan .label-wrap { display: flex; align-items: center; gap: 8px; color: #FF5A1F; font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px; }
   #screen-mealplan .main-title { font-family: 'Sora', sans-serif; font-size: 34px; font-weight: 800; color: #1a1a1a; line-height: 1.15; letter-spacing: -1px; margin-bottom: 8px; }
   #screen-mealplan .sub-title { font-size: 16px; font-weight: 700; color: #999; }
-  #screen-mealplan .meal-list { padding: 0 24px; display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
-  #screen-mealplan .meal-card { background: #fff; border-radius: 24px; padding: 20px 20px 20px 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid #f4f3ef; position: relative; overflow: hidden; }
-  #screen-mealplan .meal-card::before { content: ''; position: absolute; left: 0; top: 20px; bottom: 20px; width: 6px; border-radius: 0 6px 6px 0; }
+  #screen-mealplan .meal-list { padding: 0 24px; display: flex; flex-direction: column; gap: 18px; margin-bottom: 24px; }
+  #screen-mealplan .meal-card { min-height: 112px; background: #fff; border-radius: 24px; padding: 22px 20px 22px 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #f0efeb; position: relative; overflow: hidden; }
+  #screen-mealplan .meal-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; }
   #screen-mealplan .meal-card.breakfast::before { background: #FFD600; }
   #screen-mealplan .meal-card.lunch::before { background: #FF5A1F; }
   #screen-mealplan .meal-card.dinner::before { background: #00C853; }
@@ -314,10 +314,11 @@ html_code = """
   #screen-mealplan .meal-time { font-size: 11px; font-weight: 800; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
   #screen-mealplan .meal-name { font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 800; color: #1a1a1a; }
   #screen-mealplan .meal-cals { font-size: 13px; font-weight: 700; color: #aaa; display: flex; align-items: center; gap: 4px; }
-  #screen-mealplan .btn-order { background: #1a1a1a; color: #fff; border: none; border-radius: 16px; padding: 10px 18px; font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; }
+  #screen-mealplan .meal-actions { display: flex; align-items: center; justify-content: center; min-width: 78px; margin-left: 14px; }
+  #screen-mealplan .btn-order { background: #1a1a1a; color: #fff; border: none; border-radius: 18px; padding: 12px 18px; font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 800; cursor: pointer; white-space: nowrap; box-shadow: 0 10px 22px rgba(0,0,0,0.12); }
   #screen-mealplan .btn-swap { background: #f5f3ef; border: 1px solid #e0ded8; border-radius: 16px; padding: 10px 12px; font-size: 14px; cursor: pointer; transition: transform 0.15s; }
   #screen-mealplan .btn-swap:active { transform: scale(0.9); }
-  #screen-mealplan .check-icon { width: 40px; height: 40px; background: #00C853; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0, 200, 83, 0.2); }
+  #screen-mealplan .check-icon { width: 44px; height: 44px; background: #00C853; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 22px rgba(0, 200, 83, 0.24); }
   #screen-mealplan .nutrition-card { margin: 0 24px; background: #fff; border-radius: 32px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid #f4f3ef; }
   #screen-mealplan .nutrition-header { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
   #screen-mealplan .nutrition-title { font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 800; color: #1a1a1a; }
@@ -989,8 +990,9 @@ html_code = """
             450 kcal
           </div>
         </div>
-        <button class="btn-order" data-meal-id="breakfast">Đặt ngay</button>
-        <button class="btn-swap" data-meal-id="breakfast" onclick="swapMealPlanItem('breakfast')" title="Đổi món">🔄</button>
+        <div class="meal-actions">
+          <button class="btn-order" data-meal-id="breakfast">Đặt món</button>
+        </div>
       </div>
 
       <div class="meal-card lunch" data-meal-id="lunch">
@@ -1004,8 +1006,9 @@ html_code = """
             450 kcal
           </div>
         </div>
-        <button class="btn-order btn-order-lunch" data-meal-id="lunch">Đặt ngay</button>
-        <button class="btn-swap" data-meal-id="lunch" onclick="swapMealPlanItem('lunch')" title="Đổi món">🔄</button>
+        <div class="meal-actions">
+          <button class="btn-order btn-order-lunch" data-meal-id="lunch">Đặt món</button>
+        </div>
       </div>
 
       <div class="meal-card dinner" data-meal-id="dinner">
@@ -1019,8 +1022,9 @@ html_code = """
             450 kcal
           </div>
         </div>
-        <button class="btn-order btn-order-dinner" data-meal-id="dinner">Đặt ngay</button>
-        <button class="btn-swap" data-meal-id="dinner" onclick="swapMealPlanItem('dinner')" title="Đổi món">🔄</button>
+        <div class="meal-actions">
+          <button class="btn-order btn-order-dinner" data-meal-id="dinner">Đặt món</button>
+        </div>
       </div>
     </div>
 
@@ -1411,13 +1415,18 @@ html_code = """
     lunch: { name: 'Đang tải...', price: 0, calories: 0, protein: 0, carbs: 0, fat: 0 },
     dinner: { name: 'Đang tải...', price: 0, calories: 0, protein: 0, carbs: 0, fat: 0 }
   };
+  const todayRecommendedMealPlan = {
+    breakfast: { name: 'Bánh mì ốp la', calories: 450, protein: 22, carbs: 48, fat: 18, price: 30000, meal_type: 'Full meal' },
+    lunch: { name: 'Cơm tấm sườn bì', calories: 450, protein: 28, carbs: 54, fat: 14, price: 45000, meal_type: 'Full meal' },
+    dinner: { name: 'Salad ức gà', calories: 450, protein: 35, carbs: 30, fat: 16, price: 42000, meal_type: 'Healthy meal' }
+  };
 
   function populateMealPlanScreen() {
-    if (!window.foodmindMealPlan) return;
     ['breakfast', 'lunch', 'dinner'].forEach(function(mealId) {
       var card = document.querySelector('#screen-mealplan .meal-card[data-meal-id="' + mealId + '"]');
       if (!card) return;
-      var planData = window.foodmindMealPlan[mealId];
+      var backendData = window.foodmindMealPlan ? window.foodmindMealPlan[mealId] : {};
+      var planData = Object.assign({}, backendData || {}, todayRecommendedMealPlan[mealId]);
       if (!planData) { card.style.display = 'none'; return; }
       card.style.display = '';
       var nameEl = card.querySelector('.meal-name');
