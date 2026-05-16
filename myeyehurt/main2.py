@@ -90,7 +90,7 @@ html_code = """
   .progress-label { font-size: 14px; color: #888; font-weight: 500; }
   .progress-value { font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 700; color: #1a1a1a; }
   #screen-loading .progress-track { width: 100%; height: 8px; background: #f0f0f0; border-radius: 99px; overflow: hidden; }
-  #screen-loading .progress-fill { height: 100%; border-radius: 99px; width: 0%; transition: width 0.6s ease; }
+  #screen-loading .progress-fill { height: 100%; border-radius: 99px; width: 0%; }
   #screen-loading .fill-orange { background: #FF5A1F; } #screen-loading .fill-yellow { background: #F59E0B; }
 
   /* ================= CSS MÀN HÌNH 2 (RESULT) ================= */
@@ -2379,7 +2379,7 @@ html_code = """
       var desc = (r.meal_type || 'Món ngon') + ' • ' + (r.calories || 0) + ' kcal';
 
       var itemHTML = '<div class="menu-item" data-dish-id="' + r.dish_id + '">' +
-        '<img src="' + imgSrc + '" alt="' + r.dish_name.replace(/"/g, '&quot;') + '" class="menu-img" onerror="this.src=\\'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=150&q=80\\'">' +
+        '<img src="' + imgSrc + '" alt="' + r.dish_name.replace(/"/g, '&quot;') + '" class="menu-img" onerror="this.src=\'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=150&q=80\'">' +
         '<div class="menu-info">' +
           '<div class="menu-name">' + r.dish_name + '</div>' +
           '<div class="menu-desc">' + desc + '</div>' +
@@ -2422,7 +2422,7 @@ html_code = """
       var desc = (r.meal_type || 'Món ngon') + (matchPct ? ' • ' + matchPct : '');
 
       var itemHTML = '<div class="menu-item" data-dish-id="' + r.dish_id + '">' +
-        '<img src="' + imgSrc + '" alt="' + r.dish_name.replace(/"/g, '&quot;') + '" class="menu-img" onerror="this.src=\\'https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?auto=format&fit=crop&w=150&q=80\\'">' +
+        '<img src="' + imgSrc + '" alt="' + r.dish_name.replace(/"/g, '&quot;') + '" class="menu-img" onerror="this.src=\'https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?auto=format&fit=crop&w=150&q=80\'">' +
         '<div class="menu-info">' +
           '<div class="menu-name">' + r.dish_name + '</div>' +
           '<div class="menu-desc">' + desc + '</div>' +
@@ -2445,17 +2445,31 @@ html_code = """
 
   readPrefsFromHash();
 
-  // Animate progress bars sau khi engine-card bắt đầu hiện (fadeUp start 2.1s)
+  // JS animation loop — tự tay animate từng frame, KHÔNG dựa vào CSS transition
+  function animateBar(el, targetPct, duration) {
+    if (!el) return;
+    var startTime = performance.now();
+    var startPct = 0;
+    el.style.width = '0%';
+    function step(now) {
+      var elapsed = now - startTime;
+      var progress = Math.min(elapsed / duration, 1);
+      // ease-out cubic: rõ ràng, mượt
+      var eased = 1 - Math.pow(1 - progress, 3);
+      el.style.width = (startPct + (targetPct - startPct) * eased) + '%';
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  // Chờ card fadeUp gần xong (2.1s + 0.5s = ~2.6s) mới fill bar
   setTimeout(function() {
-    var hb = document.querySelector('.bar-hunger');
-    var bb = document.querySelector('.bar-budget');
-    if (!hb || !bb) return;
     var p = window.userPrefs;
     var hungerPct = Math.round((parseFloat(p.hunger) / 10) * 100);
     var budgetPct = ({'under_30k':18,'30_50k':40,'50_100k':70,'over_100k':95}[p.budget] || 50);
-    hb.style.width = hungerPct + '%';
-    bb.style.width = budgetPct + '%';
-  }, 2400);
+    animateBar(document.querySelector('.bar-hunger'), hungerPct, 800);
+    animateBar(document.querySelector('.bar-budget'), budgetPct, 800);
+  }, 2500);
 
   setTimeout(function() {
     populateMealPlanScreen();
