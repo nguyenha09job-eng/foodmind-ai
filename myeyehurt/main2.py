@@ -214,6 +214,10 @@ html_code = """
   .menu-desc { font-size: 12px; color: #888; margin-bottom: 8px; font-weight: 500; }
   .menu-meta { display: flex; align-items: center; gap: 8px; font-size: 12px; }
   .menu-cal { font-weight: 700; color: #FF5A1F; }
+  .cal-level { display: inline-flex; align-items: center; height: 18px; padding: 0 7px; border-radius: 999px; font-family: 'Sora', sans-serif; font-size: 10px; font-weight: 800; line-height: 1; }
+  .cal-level.low { background: #E8F5E9; color: #00A344; }
+  .cal-level.medium { background: #FFF4D6; color: #B26A00; }
+  .cal-level.high { background: #FFE8E0; color: #D84315; }
   .menu-price { font-family: 'Sora', sans-serif; font-weight: 800; color: #1a1a1a; }
   .add-btn { width: 40px; height: 40px; border-radius: 14px; background: #1a1a1a; color: #fff; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; }
   .floating-order-box { position: absolute; bottom: 30px; left: 24px; right: 24px; z-index: 50; }
@@ -314,7 +318,7 @@ html_code = """
   #screen-mealplan .meal-info { display: flex; flex-direction: column; gap: 6px; }
   #screen-mealplan .meal-time { font-size: 11px; font-weight: 800; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
   #screen-mealplan .meal-name { font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 800; color: #1a1a1a; }
-  #screen-mealplan .meal-cals { font-size: 13px; font-weight: 700; color: #aaa; display: flex; align-items: center; gap: 4px; }
+  #screen-mealplan .meal-cals { font-size: 13px; font-weight: 700; color: #aaa; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   #screen-mealplan .meal-actions { display: flex; align-items: center; justify-content: center; min-width: 78px; margin-left: 14px; }
   #screen-mealplan .btn-order { background: #1a1a1a; color: #fff; border: none; border-radius: 18px; padding: 12px 18px; font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 800; cursor: pointer; white-space: nowrap; box-shadow: 0 10px 22px rgba(0,0,0,0.12); }
   #screen-mealplan .btn-swap { background: #f5f3ef; border: 1px solid #e0ded8; border-radius: 16px; padding: 10px 12px; font-size: 14px; cursor: pointer; transition: transform 0.15s; }
@@ -989,6 +993,7 @@ html_code = """
               <path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"></path>
             </svg>
             450 kcal
+            <span class="cal-level medium">Medium</span>
           </div>
         </div>
         <div class="meal-actions">
@@ -1005,6 +1010,7 @@ html_code = """
               <path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"></path>
             </svg>
             450 kcal
+            <span class="cal-level medium">Medium</span>
           </div>
         </div>
         <div class="meal-actions">
@@ -1021,6 +1027,7 @@ html_code = """
               <path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"></path>
             </svg>
             450 kcal
+            <span class="cal-level medium">Medium</span>
           </div>
         </div>
         <div class="meal-actions">
@@ -1437,7 +1444,7 @@ html_code = """
       var nameEl = card.querySelector('.meal-name');
       var calsEl = card.querySelector('.meal-cals');
       if (nameEl) nameEl.textContent = planData.name;
-      if (calsEl) calsEl.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"></path></svg> ' + planData.calories + ' kcal';
+      if (calsEl) calsEl.innerHTML = mealCaloriesHtml(planData.calories);
       mealPlanMeals[mealId] = planData;
     });
     renderMealPlanNutrition();
@@ -1454,7 +1461,7 @@ html_code = """
       var nameEl = card.querySelector('.meal-name');
       var calsEl = card.querySelector('.meal-cals');
       if (nameEl) nameEl.textContent = pick.name;
-      if (calsEl) calsEl.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"></path></svg> ' + pick.calories + ' kcal';
+      if (calsEl) calsEl.innerHTML = mealCaloriesHtml(pick.calories);
     }
     renderMealPlanNutrition();
   }
@@ -1534,6 +1541,22 @@ html_code = """
       '"': '&quot;',
       "'": '&#39;'
     })[char]);
+  }
+
+  function getCalorieLevel(calories) {
+    var value = Number(calories) || 0;
+    if (value < 400) return { label: 'Low', className: 'low' };
+    if (value <= 700) return { label: 'Medium', className: 'medium' };
+    return { label: 'High', className: 'high' };
+  }
+
+  function calorieLevelBadge(calories) {
+    var level = getCalorieLevel(calories);
+    return '<span class="cal-level ' + level.className + '">' + level.label + '</span>';
+  }
+
+  function mealCaloriesHtml(calories) {
+    return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"></path></svg> <span>' + (Number(calories) || 0) + ' kcal</span> ' + calorieLevelBadge(calories);
   }
 
   function getCartTotals() {
@@ -2579,6 +2602,7 @@ html_code = """
     window.foodmindBackendResults.forEach(function(r, idx) {
       var priceFormatted = Number(r.price).toLocaleString('vi-VN') + ' đ';
       var imgSrc = r.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=150&q=80';
+      var calBadge = calorieLevelBadge(r.calories);
       var desc = (r.meal_type || 'Món ngon') + ' • ' + (r.calories || 0) + ' kcal';
 
       var itemHTML = '<div class="menu-item" data-dish-id="' + r.dish_id + '">' +
@@ -2588,6 +2612,7 @@ html_code = """
           '<div class="menu-desc">' + desc + '</div>' +
           '<div class="menu-meta">' +
             '<span class="menu-cal">🔥 ' + (r.calories || 0) + ' kcal</span>' +
+            calBadge +
             '<span style="color:#ccc">•</span>' +
             '<span class="menu-price">' + priceFormatted + '</span>' +
           '</div>' +
@@ -2653,6 +2678,7 @@ html_code = """
     restaurantDishes.forEach(function(r) {
       var priceFormatted = Number(r.price).toLocaleString('vi-VN') + ' đ';
       var imgSrc = r.image_url || 'https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?auto=format&fit=crop&w=150&q=80';
+      var calBadge = calorieLevelBadge(r.calories);
       var matchPct = r.match_score ? r.match_score.toFixed(0) + '% match' : '';
       var desc = (r.meal_type || 'Món ngon') + (matchPct ? ' • ' + matchPct : '');
 
@@ -2663,6 +2689,7 @@ html_code = """
           '<div class="menu-desc">' + desc + '</div>' +
           '<div class="menu-meta">' +
             '<span class="menu-cal">🔥 ' + (r.calories || 0) + ' kcal</span>' +
+            calBadge +
             '<span style="color:#ccc">•</span>' +
             '<span class="menu-price">' + priceFormatted + '</span>' +
           '</div>' +
