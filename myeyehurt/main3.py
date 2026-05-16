@@ -577,9 +577,29 @@ transition_js = """
         }
     };
 
+    window.switchToTrackingFromResults = function() {
+        var onboardingView = document.getElementById('onboarding-view');
+        var resultsView = document.getElementById('results-view');
+
+        if (resultsView) resultsView.style.display = 'none';
+        if (onboardingView) onboardingView.style.display = 'flex';
+
+        [splashScreen, loginScreen, registerScreen, homeScreen, budgetScreen, hungerScreen, dietScreen, app7Screen].forEach(function(screen) {
+            if (screen) screen.classList.remove('active', 'just-entered');
+        });
+        if (app7Screen) {
+            app7Screen.classList.add('active', 'just-entered');
+            setTimeout(function() {
+                app7Screen.classList.remove('just-entered');
+            }, 400);
+        }
+    };
+
     window.addEventListener('message', function(event) {
         if (event.data && event.data.type === 'foodmind-edit-needs') {
             window.switchToHomeFromResults();
+        } else if (event.data && event.data.type === 'foodmind-show-tracking') {
+            window.switchToTrackingFromResults();
         }
     });
 

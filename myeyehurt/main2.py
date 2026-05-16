@@ -2318,12 +2318,14 @@ html_code = """
     // Look up real restaurant data for rating & location
     var rating = '4.0';
     var distance = '~1.5 km';
+    var realImg = r.image_url;
     if (window.foodmindRestaurants && window.foodmindRestaurants.length) {
       var matchedRest = window.foodmindRestaurants.find(function(rst) {
         return rst.restaurant_id === r.restaurant_id || rst.name === r.restaurant_name;
       });
       if (matchedRest) {
         rating = (matchedRest.rating || 4.0).toFixed(1);
+        if (matchedRest.cover_image_url) realImg = matchedRest.cover_image_url;
         if (matchedRest.lat && matchedRest.lng) {
           var userLat = window.userPrefs && window.userPrefs._lat ? window.userPrefs._lat : 10.7614;
           var userLng = window.userPrefs && window.userPrefs._lng ? window.userPrefs._lng : 106.6686;
@@ -2335,6 +2337,8 @@ html_code = """
       }
     }
 
+    var imgUrl = realImg ? 'url(\"' + realImg + '\")' : 'url(\"data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22390%22 height=%22280%22%3E%3Crect fill=%22%23222%22 width=%22390%22 height=%22280%22/%3E%3Ctext fill=%22%23fff%22 x=%2220%22 y=%22260%22 font-size=%2216%22%3E' + encodeURIComponent(r.restaurant_name) + '%3C/text%3E%3C/svg%3E\")';
+
     return {
       name: r.restaurant_name,
       title: r.restaurant_name,
@@ -2344,7 +2348,7 @@ html_code = """
       distance: distance,
       rating: rating,
       tag: mealType + ' • ' + matchPct + '% phù hợp',
-      image: 'url(\"data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22390%22 height=%22280%22%3E%3Crect fill=%22%23222%22 width=%22390%22 height=%22280%22/%3E%3Ctext fill=%22%23fff%22 x=%2220%22 y=%22260%22 font-size=%2216%22%3E' + encodeURIComponent(r.restaurant_name) + '%3C/text%3E%3C/svg%3E\")',
+      image: imgUrl,
       gradient: gradient,
       mealType: mealType,
       backendData: r,
@@ -2385,13 +2389,16 @@ html_code = """
 
     ['#screen-result', '#screen-result1'].forEach(function(sel) {
       var screen = document.querySelector(sel);
-      if (!screen || screen.style.display === 'none') return;
+      if (!screen) return;
 
       if (top4.length > 0) {
         var detail = restaurantDetails[top4[0].restaurant_name];
         if (detail) {
           selectedRestaurantName = detail.name;
           var mainCard = screen.querySelector('.food-card');
+          if (mainCard && mainCard.firstElementChild) {
+            mainCard.firstElementChild.style.background = detail.image + ' center/cover';
+          }
           var matchPct = screen.querySelector('.match-pct');
           var ratingVal = screen.querySelector('.rating-val');
           var distance = screen.querySelector('.food-distance');
@@ -2542,7 +2549,84 @@ html_code = """
     animateBar(document.querySelector('.bar-budget'), budgetPct, 800);
   }, 2500);
 
+  function recalculateFuzzyScoresJS() {
+    if (!window.foodmindRawResults || !window.userPrefs) return;
+    var p = window.userPrefs;
+
+    function getBudgetScore(price, budgetStr) {
+      var score = 1.0;
+      if (budgetStr === 'under_30k' && price > 35000) score -= (price-30000)/20000;
+      if (budgetStr === '30_50k' && (price < 25000 || price > 55000)) score -= Math.abs(price-40000)/40000;
+      if (budgetStr === '50_100k' && (price < 40000 || price > 110000)) score -= Math.abs(price-75000)/75000;
+      if (budgetStr === 'over_100k' && price < 80000) score -= (90000-price)/40000;
+      return Math.max(0.1, Math.min(1.0, score));
+    }
+
+    function getHungerScore(cals, hungerVal) {
+      var targetCals = (hungerVal || 5) * 100;
+      var diff = Math.abs(cals - targetCals);
+      return Math.max(0.1, 1.0 - (diff / Math.max(1, targetCals)));
+    }
+
+    function getDietScore(protein, carbs, fat, cals, dietStr) {
+      if (!dietStr || dietStr === 'Normal' || dietStr === 'Không') return 1.0;
+      var score = 1.0;
+      if (dietStr === 'Diet' || dietStr === 'Healthy' || dietStr.includes('Giảm cân') || dietStr.includes('Healthy')) {
+        if (carbs > 50) score -= (carbs-50)/100;
+        if (fat > 20) score -= (fat-20)/50;
+        if (cals > 500) score -= (cals-500)/500;
+      } else if (dietStr === 'Bulking' || dietStr.includes('Tăng cơ')) {
+        if (protein < 30) score -= (30-protein)/50;
+        if (carbs < 80) score -= (80-carbs)/100;
+        if (cals < 800) score -= (800-cals)/1000;
+      }
+      return Math.max(0.1, Math.min(1.0, score));
+    }
+
+    function getCuisineScore(dishCuisine, userCuisine) {
+      if (!userCuisine || userCuisine.toLowerCase() === 'any') return 1.0;
+      var dc = (dishCuisine || '').toLowerCase();
+      var uc = userCuisine.toLowerCase();
+      if (dc.includes(uc) || uc.includes(dc)) return 1.0;
+      if (uc.includes('việt nam') && dc.includes('vn')) return 1.0;
+      if (uc.includes('hàn') && dc.includes('kr')) return 1.0;
+      if (uc.includes('nhật') && dc.includes('jp')) return 1.0;
+      if (uc.includes('trung') && dc.includes('cn')) return 1.0;
+      return 0.2;
+    }
+
+    var recalculated = window.foodmindRawResults.map(function(r) {
+      var pScore = getBudgetScore(r.price, p.budget);
+      var hScore = getHungerScore(r.calories, p.hunger);
+      var dScore = getDietScore(r.protein_g, r.carb_g, r.fat_g, r.calories, p.diet || p.health_goal);
+      var cuScore = getCuisineScore(r.cuisine_type, p.cuisine);
+      
+      var baseScore = (pScore * 0.4) + (0.8 * 0.1) + (hScore * 0.2) + (dScore * 0.2) + (0.8 * 0.1);
+      var finalScore = baseScore * cuScore;
+      finalScore = Math.min(0.99, finalScore * 1.4);
+
+      return Object.assign({}, r, {
+        match_score: finalScore * 100,
+        meal_type: r.food_category && r.food_category.toLowerCase().includes('snack') ? 'Snack' : 'Full meal'
+      });
+    });
+
+    recalculated.sort(function(a, b) { return b.match_score - a.match_score; });
+    window.foodmindBackendResults = recalculated.slice(0, 15);
+    
+    var breakfast = recalculated.find(function(r) { return r.meal_type === 'Snack'; }) || recalculated[2] || recalculated[0];
+    var lunch = recalculated.find(function(r) { return r.meal_type === 'Full meal' && r.dish_id !== breakfast.dish_id; }) || recalculated[0];
+    var dinner = recalculated.find(function(r) { return r.meal_type === 'Full meal' && r.dish_id !== breakfast.dish_id && r.dish_id !== lunch.dish_id; }) || recalculated[1] || recalculated[0];
+    
+    window.foodmindMealPlan = {
+      Breakfast: breakfast,
+      Lunch: lunch,
+      Dinner: dinner
+    };
+  }
+
   setTimeout(function() {
+    recalculateFuzzyScoresJS();
     populateMealPlanScreen();
     syncBackendDataToCards();
     populateSinglesMenu();
