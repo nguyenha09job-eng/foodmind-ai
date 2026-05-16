@@ -36,7 +36,7 @@ def generate_real_map(user_lat, user_lng, chosen_restaurant_id=None):
     df = pd.read_csv('restaurant.csv')
     user_coords = (user_lat, user_lng)
     
-    m = folium.Map(location=user_coords, zoom_start=14)
+    m = folium.Map(location=user_coords, zoom_start=7)
     
     folium.Marker(
         location=user_coords,

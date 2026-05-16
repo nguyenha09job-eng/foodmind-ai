@@ -4,8 +4,12 @@ import html
 from pathlib import Path
 import re
 
-# --- Import hàm sinh HTML động cho bản đồ ---
-from foodmind_app17 import generate_map_html
+# --- Import backend cho bản đồ ---
+import sys as _sys, os as _os, json as _json
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parent.parent / 'mybackhurt'))
+from fuzzylogic import get_nearby_restaurants_for_map
+import folium as _folium
 
 # --- Cấu hình ---
 st.set_page_config(
@@ -110,7 +114,7 @@ html_hunger   = extract_html(BASE_DIR / "foodmind_app5.py")
 html_diet     = extract_html(BASE_DIR / "foodmind_app6.py")
 html_app7     = extract_html(BASE_DIR / "foodmind_app7.py")
 html_results  = extract_html(BASE_DIR / "main2.py")
-html_map      = generate_map_html()
+html_map      = extract_html(BASE_DIR / "foodmind_app16.py")
 
 html_files = {
     "foodmind_app.py": html_splash,
@@ -122,7 +126,7 @@ html_files = {
     "foodmind_app6.py": html_diet,
     "foodmind_app7.py": html_app7,
     "main2.py": html_results,
-    "foodmind_app17.py": html_map,
+    "foodmind_app16.py": html_map,
 }
 missing_files = [name for name, content in html_files.items() if not content]
 
@@ -138,6 +142,30 @@ style_budget,   body_budget   = split_html(html_budget)
 style_hunger,   body_hunger   = split_html(html_hunger)
 style_diet,     body_diet     = split_html(html_diet)
 style_app7,     body_app7     = split_html(html_app7)
+
+# --- Chèn dữ liệu thật + Folium map vào html_map (từ foodmind_app16) ---
+_MAP_USER_LAT, _MAP_USER_LNG = 10.7614, 106.6686
+_map_restaurants = get_nearby_restaurants_for_map(_MAP_USER_LAT, _MAP_USER_LNG)
+_fm = _folium.Map(location=[_MAP_USER_LAT, _MAP_USER_LNG], zoom_start=15, control_scale=True, tiles='OpenStreetMap')
+_folium.Marker(location=[_MAP_USER_LAT, _MAP_USER_LNG], popup=_folium.Popup("📍 Vị trí của bạn", max_width=200), icon=_folium.Icon(color="blue", icon="home", prefix="fa")).add_to(_fm)
+for _r in _map_restaurants:
+    _mp = _r.get('top_match', 50)
+    _c = 'red' if _mp >= 80 else ('orange' if _mp >= 60 else 'green')
+    _ph = f'<div style="font-family:Be Vietnam Pro,sans-serif;min-width:200px;"><b style="font-size:15px;">{_r["name"]}</b><br>⭐ {_r.get("rating",4.0):.1f} | 🏆 {_mp:.0f}% Match<br>📍 Cách {_r.get("distance_str","~1 km")}</div>'
+    _folium.Marker(location=[_r['lat'], _r['lng']], popup=_folium.Popup(_ph, max_width=280), icon=_folium.Icon(color=_c, icon="cutlery", prefix="fa"), tooltip=f"{_r['name']} ({_mp:.0f}%)").add_to(_fm)
+if _map_restaurants:
+    _lats = [_MAP_USER_LAT] + [r['lat'] for r in _map_restaurants]
+    _lngs = [_MAP_USER_LNG] + [r['lng'] for r in _map_restaurants]
+    _fm.fit_bounds([[min(_lats), min(_lngs)], [max(_lats), max(_lngs)]], padding=[30, 30])
+_FOLIUM_HTML = _fm.get_root().render()
+_FOLIUM_HTML = _FOLIUM_HTML.replace('</head>', '<meta name="viewport" content="width=device-width, initial-scale=1.0"><style>html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;}.folium-map{width:100%!important;height:100%!important;position:absolute;top:0;left:0;}</style></head>')
+_FOLIUM_JS_SAFE = _FOLIUM_HTML.replace('\\', '\\\\').replace('`', '\\`').replace('$', '\\$').replace('</', '<\\/')
+_REST_JSON = _json.dumps(_map_restaurants, ensure_ascii=False)
+html_map = html_map.replace('RESTAURANTS_JSON_PLACEHOLDER', _REST_JSON)
+html_map = html_map.replace('USER_LAT_PLACEHOLDER', str(_MAP_USER_LAT))
+html_map = html_map.replace('USER_LNG_PLACEHOLDER', str(_MAP_USER_LNG))
+html_map = html_map.replace('FOLIUM_PLACEHOLDER', '`' + _FOLIUM_JS_SAFE + '`')
+
 style_map,      body_map      = split_html(html_map)
 
 # --- Sửa onclick để gọi JavaScript chuyển trang ---
@@ -998,19 +1026,159 @@ html_results   = apply_app_font(html_results)
 import sys, os, json
 sys.path.insert(0, str(BASE_DIR.parent / 'mybackhurt'))
 os.chdir(str(BASE_DIR.parent / 'mybackhurt'))
-from fuzzylogic import get_recommendations, load_data, get_meal_type
+from fuzzylogic import load_data
 
 try:
+    import pandas as pd
     _config, _dishes_df, _restaurants_df = load_data()
+
+    # --- Inject window.foodmindConfig ---
+    _config_js = {
+        'price_membership_fn': _config.get('price_membership_fn', {}),
+        'time_membership_fn': _config.get('time_membership_fn', {}),
+        'hunger_membership_fn': _config.get('hunger_membership_fn', {}),
+        'hunger_to_calorie_map': _config.get('hunger_to_calorie_map', {}),
+        'diet_macro_targets': _config.get('diet_macro_targets', {}),
+        'weather_food_map': _config.get('weather_food_map', {}),
+        'score_weights': _config.get('score_weights', {})
+    }
+
+    # --- Inject window.foodmindRawResults (toàn bộ món) ---
+    _raw_results = []
+    for _, row in _dishes_df.iterrows():
+        _rest_match = _restaurants_df[_restaurants_df['restaurant_id'] == row['restaurant_id']]
+        _rname = str(_rest_match['name'].values[0]) if len(_rest_match) > 0 else 'Unknown'
+        _raw_results.append({
+            'dish_id': str(row['dish_id']),
+            'dish_name': str(row['name']),
+            'restaurant_id': str(row['restaurant_id']),
+            'restaurant_name': _rname,
+            'price': float(row['price']),
+            'calories': float(row['calories']),
+            'protein_g': float(row['protein_g']),
+            'carb_g': float(row['carb_g']),
+            'fat_g': float(row['fat_g']),
+            'cuisine_type': str(row.get('cuisine_type', '')),
+            'food_category': str(row.get('food_category', '')),
+            'rating': float(row.get('rating', 4.0)),
+            'order_count': float(row.get('order_count', 100)),
+            'is_available': str(row.get('is_available', 'True')).lower() == 'true',
+            'image_url': str(row.get('image_url', ''))
+        })
+
+    # --- Inject window.foodmindRestaurants ---
+    _restaurants_json = []
+    for _, row in _restaurants_df.iterrows():
+        _restaurants_json.append({
+            'restaurant_id': str(row['restaurant_id']),
+            'name': str(row['name']),
+            'lat': float(row['lat']) if pd.notna(row.get('lat')) else None,
+            'lng': float(row['lng']) if pd.notna(row.get('lng')) else None,
+            'avg_prep_time': float(row.get('avg_prep_time', 15)) if pd.notna(row.get('avg_prep_time', 15)) else 15,
+            'is_open': str(row.get('is_open', 'True')).lower() != 'false',
+            'open_hours': str(row.get('open_hours', '00:00-23:59')),
+            'cuisine_type': str(row.get('cuisine_type', '')),
+            'cover_image_url': str(row.get('cover_image_url', '')),
+            'rating': float(row.get('rating', 4.0)),
+            'address': str(row.get('address', ''))
+        })
+
+    # --- Tạo kế hoạch ăn uống (meal plan) từ dữ liệu thật ---
+    from fuzzylogic import get_recommendations, generate_daily_plan
     _default_inputs = {
         'lat': 10.7614, 'lng': 106.6686,
         'budget': '30_50k', 'time': 'fast',
         'hunger': 6.5, 'health_goal': 'Normal',
         'weather': 'Normal', 'cuisine': 'Việt Nam'
     }
-    _results = get_recommendations(_default_inputs, _config, _dishes_df, _restaurants_df)
-    _inject_json = json.dumps(_results[:30], ensure_ascii=False)
-    _inject_script = f'<script>window.foodmindBackendResults = {_inject_json};</script>'
+    _meal_plan = generate_daily_plan(_default_inputs, _config, _dishes_df, _restaurants_df)
+    _meal_plan_json = {}
+    _used_dish_ids = []
+    for _meal_key, _meal_val in _meal_plan.items():
+        _dinfo = _dishes_df[_dishes_df['dish_id'] == _meal_val['dish_id']].iloc[0]
+        _used_dish_ids.append(str(_meal_val['dish_id']))
+        _mprice = int(_meal_val['price']) if pd.notna(_meal_val.get('price')) else 0
+        _mcal = int(float(_dinfo['calories'])) if pd.notna(_dinfo.get('calories')) else 0
+        _mprotein = int(float(_dinfo['protein_g'])) if pd.notna(_dinfo.get('protein_g')) else 0
+        _mcarbs = int(float(_dinfo['carb_g'])) if pd.notna(_dinfo.get('carb_g')) else 0
+        _mfat = int(float(_dinfo['fat_g'])) if pd.notna(_dinfo.get('fat_g')) else 0
+        _meal_plan_json[_meal_key] = {
+            'dish_id': str(_meal_val['dish_id']),
+            'name': str(_meal_val['dish_name']),
+            'restaurant_name': str(_meal_val['restaurant_name']),
+            'restaurant_id': str(_meal_val['restaurant_id']),
+            'price': _mprice,
+            'calories': _mcal,
+            'protein': _mprotein,
+            'carbs': _mcarbs,
+            'fat': _mfat,
+            'image_url': str(_dinfo.get('image_url', '')),
+            'match_score': _meal_val['match_score'],
+            'meal_type': str(_meal_val.get('meal_type', ''))
+        }
+    # Sinh danh sách thay thế cho mỗi bữa (top 3 alternatives)
+    _all_recs = get_recommendations(_default_inputs, _config, _dishes_df, _restaurants_df)
+    _meal_alternatives = {'breakfast': [], 'lunch': [], 'dinner': []}
+    _meal_type_map = {'Breakfast': 'breakfast', 'Lunch': 'lunch', 'Dinner': 'dinner'}
+    for _r in _all_recs:
+        if len(_meal_alternatives['breakfast']) >= 3 and len(_meal_alternatives['lunch']) >= 3 and len(_meal_alternatives['dinner']) >= 3:
+            break
+        _did = str(_r['dish_id'])
+        if _did in _used_dish_ids: continue
+        _mt = _r.get('meal_type', '')
+        _slot = None
+        if _mt == 'Snack':
+            _slot = 'breakfast'
+        elif _mt == 'Full meal':
+            _slot = 'lunch'
+        else:
+            _slot = 'dinner'
+        if _slot and len(_meal_alternatives[_slot]) < 3:
+            _dinfo2 = _dishes_df[_dishes_df['dish_id'] == _r['dish_id']].iloc[0]
+            _meal_alternatives[_slot].append({
+                'dish_id': _did,
+                'name': str(_r['dish_name']),
+                'restaurant_name': str(_r['restaurant_name']),
+                'price': int(_r['price']) if pd.notna(_r.get('price')) else 0,
+                'calories': int(float(_dinfo2['calories'])) if pd.notna(_dinfo2.get('calories')) else 0,
+                'protein': int(float(_dinfo2['protein_g'])) if pd.notna(_dinfo2.get('protein_g')) else 0,
+                'carbs': int(float(_dinfo2['carb_g'])) if pd.notna(_dinfo2.get('carb_g')) else 0,
+                'fat': int(float(_dinfo2['fat_g'])) if pd.notna(_dinfo2.get('fat_g')) else 0,
+                'match_score': _r['match_score']
+            })
+
+    # --- Tính toán recommendations cho màn Results ---
+    _backend_results = _all_recs[:15]  # Top 15 món đề xuất
+    _backend_results_json = []
+    for _br in _backend_results:
+        _bd = _dishes_df[_dishes_df['dish_id'] == _br['dish_id']].iloc[0]
+        _backend_results_json.append({
+            'dish_id': str(_br['dish_id']),
+            'dish_name': str(_br['dish_name']),
+            'restaurant_id': str(_br['restaurant_id']),
+            'restaurant_name': str(_br['restaurant_name']),
+            'price': int(_br['price']) if pd.notna(_br.get('price')) else 0,
+            'calories': int(float(_bd['calories'])) if pd.notna(_bd.get('calories')) else 0,
+            'protein_g': int(float(_bd['protein_g'])) if pd.notna(_bd.get('protein_g')) else 0,
+            'carb_g': int(float(_bd['carb_g'])) if pd.notna(_bd.get('carb_g')) else 0,
+            'fat_g': int(float(_bd['fat_g'])) if pd.notna(_bd.get('fat_g')) else 0,
+            'image_url': str(_bd.get('image_url', '')),
+            'match_score': _br['match_score'],
+            'meal_type': str(_br.get('meal_type', ''))
+        })
+
+    # --- Inject tất cả vào HTML ---
+    _inject_script = (
+        '<script>'
+        'window.foodmindConfig = ' + json.dumps(_config_js, ensure_ascii=False) + ';'
+        'window.foodmindRawResults = ' + json.dumps(_raw_results, ensure_ascii=False) + ';'
+        'window.foodmindRestaurants = ' + json.dumps(_restaurants_json, ensure_ascii=False) + ';'
+        'window.foodmindBackendResults = ' + json.dumps(_backend_results_json, ensure_ascii=False) + ';'
+        'window.foodmindMealPlan = ' + json.dumps(_meal_plan_json, ensure_ascii=False) + ';'
+        'window.foodmindMealAlternatives = ' + json.dumps(_meal_alternatives, ensure_ascii=False) + ';'
+        'window.foodmindMealTargets = {calories:1800,protein:120,carbs:250,fat:65};'
+        '</script>'
+    )
     html_results = html_results.replace('</body>', _inject_script + '\n</body>')
 except Exception as _e:
     _inject_script = f'<script>window.foodmindBackendError = "{str(_e)}";</script>'

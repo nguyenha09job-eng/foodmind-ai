@@ -1,5 +1,12 @@
 import streamlit as st
 import streamlit.components.v1 as components
+import sys, os, json
+from pathlib import Path
+
+# --- Import backend & Folium ---
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'mybackhurt'))
+from fuzzylogic import get_nearby_restaurants_for_map
+import folium
 
 st.set_page_config(
     page_title="FoodMind AI - Map Explore",
@@ -16,6 +23,61 @@ st.markdown("""
         [data-testid="stAppViewContainer"] { background: #333; } /* Nền tối để tôn lên điện thoại */
     </style>
 """, unsafe_allow_html=True)
+
+# --- Tải dữ liệu thật + tạo Folium map ---
+USER_LAT, USER_LNG = 10.7614, 106.6686
+restaurants_data = get_nearby_restaurants_for_map(USER_LAT, USER_LNG)
+
+# Tạo Folium map với marker rõ ràng
+m = folium.Map(location=[USER_LAT, USER_LNG], zoom_start=15, control_scale=True, tiles='OpenStreetMap')
+
+# Marker vị trí người dùng (xanh dương)
+folium.Marker(
+    location=[USER_LAT, USER_LNG],
+    popup=folium.Popup("📍 Vị trí của bạn", max_width=200),
+    icon=folium.Icon(color="blue", icon="home", prefix="fa")
+).add_to(m)
+
+# Marker nhà hàng
+for r in restaurants_data:
+    match_pct = r.get('top_match', 50)
+    if match_pct >= 80:
+        color = 'red'
+        label = '🔥 '
+    elif match_pct >= 60:
+        color = 'orange'
+        label = '⭐ '
+    else:
+        color = 'green'
+        label = ''
+    popup_html = (
+        f'<div style="font-family:Be Vietnam Pro,sans-serif;min-width:200px;">'
+        f'<b style="font-size:15px;">{r["name"]}</b><br>'
+        f'⭐ {r.get("rating",4.0):.1f} | 🏆 {match_pct:.0f}% Match<br>'
+        f'📍 Cách {r.get("distance_str","~1 km")}'
+        f'</div>'
+    )
+    folium.Marker(
+        location=[r['lat'], r['lng']],
+        popup=folium.Popup(popup_html, max_width=280),
+        icon=folium.Icon(color=color, icon="cutlery", prefix="fa"),
+        tooltip=f'{label}{r["name"]} ({match_pct:.0f}%)'
+    ).add_to(m)
+
+# Fit bounds để hiển thị tất cả marker
+if restaurants_data:
+    lats = [USER_LAT] + [r['lat'] for r in restaurants_data]
+    lngs = [USER_LNG] + [r['lng'] for r in restaurants_data]
+    m.fit_bounds([[min(lats), min(lngs)], [max(lats), max(lngs)]], padding=[30, 30])
+FOLIUM_HTML = m.get_root().render()
+FOLIUM_HTML = FOLIUM_HTML.replace('</head>', (
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
+    '<style>html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;}'
+    '.folium-map{width:100%!important;height:100%!important;position:absolute;top:0;left:0;}</style></head>'
+))
+RESTAURANTS_JSON = json.dumps(restaurants_data, ensure_ascii=False)
+# Escape cho JS template literal (tránh vỡ script tag)
+FOLIUM_JS_SAFE = FOLIUM_HTML.replace('\\', '\\\\').replace('`', '\\`').replace('$', '\\$').replace('</', '<\\/')
 
 html_code = """
 <!DOCTYPE html>
@@ -169,7 +231,7 @@ body {
 /* Marker vị trí người dùng */
 .user-dot-wrapper {
   position: absolute;
-  top: 320px; left: 190px;
+  top: 50%; left: 50%;
   transform: translate(-50%, -50%);
   z-index: 4;
 }
@@ -332,6 +394,25 @@ body {
 .chevron-icon { color: #ccc; }
 
 /* =========================================
+   FOLIUM MAP IFRAME WRAPPER
+   ========================================= */
+.map-iframe-wrapper {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 48px;
+  overflow: hidden;
+  z-index: 1;
+}
+.map-iframe-wrapper iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+/* =========================================
    BOTTOM NAV (Cố định dưới cùng)
    ========================================= */
 .bottom-nav {
@@ -374,42 +455,15 @@ body {
 <div class="phone-frame">
   <div class="notch"></div>
 
+  <div class="map-iframe-wrapper" id="map-wrapper"></div>
+
   <div class="search-area">
     <div class="search-box">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
       </svg>
-      <input type="text" class="search-input" placeholder="Tìm kiếm quán gần đây..." oninput="window.filterMapRestaurants && window.filterMapRestaurants()">
+      <input type="text" class="search-input" placeholder="Tìm kiếm quán gần đây..." oninput="filterRestaurants()">
     </div>
-    <div class="filter-btn">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line>
-        <line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line>
-        <line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line>
-        <line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line>
-        <line x1="17" y1="16" x2="23" y2="16"></line>
-      </svg>
-    </div>
-  </div>
-
-  <div class="map-marker" data-restaurant="Cơm Tấm Bà Lan" style="top: 200px; left: 120px;">
-    <div class="match-tag">94%</div>
-    <div class="marker-bubble">🍱</div>
-  </div>
-
-  <div class="map-marker" data-restaurant="Bún Bò Huế Chu" style="top: 200px; left: 280px;">
-    <div class="match-tag">88%</div>
-    <div class="marker-bubble">🥣</div>
-  </div>
-
-  <div class="map-marker" data-restaurant="Sushi Hokkaido" style="top: 360px; left: 80px;">
-    <div class="match-tag">82%</div>
-    <div class="marker-bubble">🍣</div>
-  </div>
-
-  <div class="map-marker" data-restaurant="Healthy Bowl" style="top: 330px; left: 330px;">
-    <div class="match-tag">96%</div>
-    <div class="marker-bubble">🥗</div>
   </div>
 
   <div class="user-dot-wrapper">
@@ -419,80 +473,11 @@ body {
 
   <div class="bottom-sheet">
     <div class="drag-handle"></div>
-    
     <div class="sheet-header">
       <div class="sheet-title">Quán gần nhất</div>
-      <div class="view-all">Xem danh sách <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
     </div>
-
-    <div class="sheet-scroll-area">
-      
-      <div class="res-card" data-restaurant="Cơm Tấm Bà Lan">
-        <div class="res-img-box">🍱</div>
-        <div class="res-info">
-          <div class="res-name">Cơm Tấm Bà Lan</div>
-          <div class="res-meta">
-            <span class="rating"><span style="color:#FFD600;">★</span> 4.8</span>
-            <span>•</span>
-            <span>Cách đây<br>350m</span>
-          </div>
-        </div>
-        <div class="res-right">
-          <div class="match-badge">94% Match</div>
-          <svg class="chevron-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-        </div>
-      </div>
-
-      <div class="res-card" data-restaurant="Bún Bò Huế Chu">
-        <div class="res-img-box">🥣</div>
-        <div class="res-info">
-          <div class="res-name">Bún Bò Huế Chu</div>
-          <div class="res-meta">
-            <span class="rating"><span style="color:#FFD600;">★</span> 4.7</span>
-            <span>•</span>
-            <span>Cách đây<br>500m</span>
-          </div>
-        </div>
-        <div class="res-right">
-          <div class="match-badge">88% Match</div>
-          <svg class="chevron-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-        </div>
-      </div>
-
-      <div class="res-card" data-restaurant="Healthy Bowl">
-        <div class="res-img-box">🥗</div>
-        <div class="res-info">
-          <div class="res-name">Healthy Bowl</div>
-          <div class="res-meta">
-            <span class="rating"><span style="color:#FFD600;">★</span> 4.8</span>
-            <span>•</span>
-            <span>Cách đây<br>420m</span>
-          </div>
-        </div>
-        <div class="res-right">
-          <div class="match-badge">94% Match</div>
-          <svg class="chevron-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-        </div>
-      </div>
-
-      <div class="res-card" data-restaurant="Sushi Hokkaido">
-        <div class="res-img-box">🍣</div>
-        <div class="res-info">
-          <div class="res-name">Sushi Hokkaido</div>
-          <div class="res-meta">
-            <span class="rating"><span style="color:#FFD600;">★</span> 4.7</span>
-            <span>•</span>
-            <span>Cách đây<br>600m</span>
-          </div>
-        </div>
-        <div class="res-right">
-          <div class="match-badge">88% Match</div>
-          <svg class="chevron-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-        </div>
-      </div>
-
-      <div class="empty-results">Không tìm thấy quán phù hợp</div>
-
+    <div class="sheet-scroll-area" id="cards-container">
+      <div class="empty-results" id="empty-msg">Không tìm thấy quán phù hợp</div>
     </div>
   </div>
 
@@ -503,7 +488,6 @@ body {
         <polyline points="9 22 9 12 15 12 15 22"></polyline>
       </svg>
     </div>
-
     <div class="nav-item">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF5A1F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon>
@@ -512,7 +496,6 @@ body {
       </svg>
       <div class="nav-dot"></div>
     </div>
-
     <div class="nav-item">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -521,7 +504,6 @@ body {
         <line x1="3" y1="10" x2="21" y2="10"></line>
       </svg>
     </div>
-
     <div class="nav-item">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -532,8 +514,96 @@ body {
 
 </div>
 
+<script>
+var restaurants = RESTAURANTS_JSON_PLACEHOLDER;
+
+var MAP_TOP = 180, MAP_BOTTOM = 620, MAP_LEFT = 15, MAP_RIGHT = 375;
+var MAP_WIDTH = MAP_RIGHT - MAP_LEFT;
+var MAP_HEIGHT = MAP_BOTTOM - MAP_TOP;
+var allLats = restaurants.map(function(r) { return r.lat; }).concat([USER_LAT_PLACEHOLDER]);
+var allLngs = restaurants.map(function(r) { return r.lng; }).concat([USER_LNG_PLACEHOLDER]);
+var minLat = Math.min.apply(null, allLats) - 0.003;
+var maxLat = Math.max.apply(null, allLats) + 0.003;
+var minLng = Math.min.apply(null, allLngs) - 0.003;
+var maxLng = Math.max.apply(null, allLngs) + 0.003;
+
+function latToY(lat) {
+    var frac = (maxLat - lat) / (maxLat - minLat);
+    if (isNaN(frac)) frac = 0.5;
+    return MAP_TOP + frac * MAP_HEIGHT;
+}
+
+function lngToX(lng) {
+    var frac = (lng - minLng) / (maxLng - minLng);
+    if (isNaN(frac)) frac = 0.5;
+    return MAP_LEFT + frac * MAP_WIDTH;
+}
+
+function buildCardHTML(r) {
+    return '<div class="res-card" data-id="' + r.restaurant_id + '">'
+        + '<div class="res-img-box">' + (r.emoji || '🍽️') + '</div>'
+        + '<div class="res-info">'
+        + '<div class="res-name">' + r.name + '</div>'
+        + '<div class="res-meta">'
+        + '<span class="rating"><span style="color:#FFD600;">★</span> ' + parseFloat(r.rating).toFixed(1) + '</span>'
+        + '<span>•</span>'
+        + '<span>Cách đây<br>' + (r.distance_str || '~1 km') + '</span>'
+        + '</div>'
+        + '</div>'
+        + '<div class="res-right">'
+        + '<div class="match-badge">' + Math.round(r.top_match) + '% Match</div>'
+        + '<svg class="chevron-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>'
+        + '</div>'
+        + '</div>';
+}
+
+function renderAll() {
+    var cardsHtml = '';
+    for (var i = 0; i < restaurants.length; i++) {
+        cardsHtml += buildCardHTML(restaurants[i]);
+    }
+    var cc = document.getElementById('cards-container');
+    if (cc) cc.innerHTML = cardsHtml + '<div class="empty-results" id="empty-msg">Không tìm thấy quán phù hợp</div>';
+}
+
+function filterRestaurants() {
+    var query = (document.querySelector('.search-input') || {}).value || '';
+    query = query.toLowerCase().trim();
+    var cards = document.querySelectorAll('.res-card');
+    var emptyMsg = document.getElementById('empty-msg');
+    var visibleCount = 0;
+    cards.forEach(function(c) {
+        var id = c.getAttribute('data-id');
+        var r = restaurants.find(function(x) { return x.restaurant_id === id; });
+        var name = (r ? r.name : '').toLowerCase();
+        var match = !query || name.indexOf(query) !== -1;
+        c.classList.toggle('is-hidden', !match);
+        if (match) visibleCount++;
+    });
+    if (emptyMsg) emptyMsg.classList.toggle('is-visible', visibleCount === 0 && !!query);
+}
+
+// Nhúng Folium map
+(function() {
+    var mapWrapper = document.getElementById('map-wrapper');
+    if (mapWrapper) {
+        var mapIframe = document.createElement('iframe');
+        mapIframe.srcdoc = FOLIUM_PLACEHOLDER;
+        mapIframe.setAttribute('allow', 'geolocation');
+        mapWrapper.appendChild(mapIframe);
+    }
+    renderAll();
+})();
+</script>
+
 </body>
 </html>
 """
+
+# --- Chèn dữ liệu thật vào placeholder ---
+html_code = html_code.replace('RESTAURANTS_JSON_PLACEHOLDER', RESTAURANTS_JSON)
+html_code = html_code.replace('USER_LAT_PLACEHOLDER', str(USER_LAT))
+html_code = html_code.replace('USER_LNG_PLACEHOLDER', str(USER_LNG))
+html_code = html_code.replace('FOLIUM_PLACEHOLDER', '`' + FOLIUM_JS_SAFE + '`')
 
 components.html(html_code, height=960, scrolling=False)

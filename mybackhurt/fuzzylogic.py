@@ -49,11 +49,13 @@ def load_data():
             "score_weights": {"price": 0.3, "time": 0.2, "calorie": 0.2, "diet": 0.15, "weather": 0.15}
         }
 
-    dishes_df = pd.read_csv(_os.path.join(_BASE_DIR, 'dishes.csv'), sep=';', skiprows=1)
+    _PROJECT_ROOT = _os.path.dirname(_BASE_DIR)
+    dishes_df = pd.read_csv(_os.path.join(_PROJECT_ROOT, 'dishes_balanced_v5.csv'))
     if len(dishes_df.columns) < 5:
-        dishes_df = pd.read_csv(_os.path.join(_BASE_DIR, 'dishes.csv'), sep=';')
+        dishes_df = pd.read_csv(_os.path.join(_PROJECT_ROOT, 'dishes_balanced_v5.csv'), sep=';')
 
-    restaurants_df = pd.read_csv(_os.path.join(_BASE_DIR, 'restaurant.csv'), sep=';', skiprows=1)
+    restaurants_df = pd.read_csv(_os.path.join(_PROJECT_ROOT, 'restaurant_balanced_fixed_images.csv'))
+    restaurants_df = restaurants_df.drop_duplicates(subset='restaurant_id', keep='first')
     return config, dishes_df, restaurants_df
 
 # ==========================================
@@ -137,7 +139,7 @@ def normalize_category(raw_cat):
     raw_cat = str(raw_cat).lower().strip()
 
     mapping = {
-        'full_meal': ['rice', 'pho', 'bun_bo', 'hotpot', 'noodle', 'sashimi', 'sushi', 'bread', 'pasta', 'nuong'],
+        'full_meal': ['rice', 'pho', 'bun_bo', 'hotpot', 'noodle', 'sashimi', 'sushi', 'bread', 'pasta', 'nuong', 'main'],
         'snack': ['snack', 'fried_food', 'cake', 'dimsum', 'skewer'],
         'drink': ['drink', 'coffee', 'tea', 'juice', 'milkshake'],
         'dessert': ['dessert', 'che', 'ice_cream', 'yogurt'],

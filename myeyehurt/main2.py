@@ -307,6 +307,8 @@ html_code = """
   #screen-mealplan .meal-name { font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 800; color: #1a1a1a; }
   #screen-mealplan .meal-cals { font-size: 13px; font-weight: 700; color: #aaa; display: flex; align-items: center; gap: 4px; }
   #screen-mealplan .btn-order { background: #1a1a1a; color: #fff; border: none; border-radius: 16px; padding: 10px 18px; font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; }
+  #screen-mealplan .btn-swap { background: #f5f3ef; border: 1px solid #e0ded8; border-radius: 16px; padding: 10px 12px; font-size: 14px; cursor: pointer; transition: transform 0.15s; }
+  #screen-mealplan .btn-swap:active { transform: scale(0.9); }
   #screen-mealplan .check-icon { width: 40px; height: 40px; background: #00C853; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0, 200, 83, 0.2); }
   #screen-mealplan .nutrition-card { margin: 0 24px; background: #fff; border-radius: 32px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid #f4f3ef; }
   #screen-mealplan .nutrition-header { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
@@ -1134,6 +1136,7 @@ html_code = """
           </div>
         </div>
         <button class="btn-order" data-meal-id="breakfast">Đặt ngay</button>
+        <button class="btn-swap" data-meal-id="breakfast" onclick="swapMealPlanItem('breakfast')" title="Đổi món">🔄</button>
       </div>
 
       <div class="meal-card lunch" data-meal-id="lunch">
@@ -1148,6 +1151,7 @@ html_code = """
           </div>
         </div>
         <button class="btn-order btn-order-lunch" data-meal-id="lunch">Đặt ngay</button>
+        <button class="btn-swap" data-meal-id="lunch" onclick="swapMealPlanItem('lunch')" title="Đổi món">🔄</button>
       </div>
 
       <div class="meal-card dinner" data-meal-id="dinner">
@@ -1162,6 +1166,7 @@ html_code = """
           </div>
         </div>
         <button class="btn-order btn-order-dinner" data-meal-id="dinner">Đặt ngay</button>
+        <button class="btn-swap" data-meal-id="dinner" onclick="swapMealPlanItem('dinner')" title="Đổi món">🔄</button>
       </div>
     </div>
 
@@ -1383,6 +1388,9 @@ html_code = """
       currentScreenId = targetId;
       isAnimating = false;
     }
+    if (targetId === 'screen-mealplan') {
+      setTimeout(function() { populateMealPlanScreen(); }, 150);
+    }
   }
 
   function switchResultTab(targetId) {
@@ -1545,10 +1553,47 @@ html_code = """
   const mealPlanNutrition = { calories: 0, protein: 0, carbs: 0 };
   const orderedMealIds = new Set();
   const mealPlanMeals = {
-    breakfast: { name: 'Bánh mì ốp la', price: 35000, calories: 450, protein: 18, carbs: 48 },
-    lunch: { name: 'Cơm tấm sườn bì', price: 55000, calories: 650, protein: 38, carbs: 78 },
-    dinner: { name: 'Salad ức gà', price: 60000, calories: 420, protein: 42, carbs: 28 }
+    breakfast: { name: 'Đang tải...', price: 0, calories: 0, protein: 0, carbs: 0, fat: 0 },
+    lunch: { name: 'Đang tải...', price: 0, calories: 0, protein: 0, carbs: 0, fat: 0 },
+    dinner: { name: 'Đang tải...', price: 0, calories: 0, protein: 0, carbs: 0, fat: 0 }
   };
+
+  function populateMealPlanScreen() {
+    if (!window.foodmindMealPlan) return;
+    ['breakfast', 'lunch', 'dinner'].forEach(function(mealId) {
+      var card = document.querySelector('#screen-mealplan .meal-card[data-meal-id="' + mealId + '"]');
+      if (!card) return;
+      var planData = window.foodmindMealPlan[mealId];
+      if (!planData) { card.style.display = 'none'; return; }
+      card.style.display = '';
+      var nameEl = card.querySelector('.meal-name');
+      var calsEl = card.querySelector('.meal-cals');
+      if (nameEl) nameEl.textContent = planData.name;
+      if (calsEl) calsEl.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"></path></svg> ' + planData.calories + ' kcal';
+      mealPlanMeals[mealId] = planData;
+    });
+    if (window.foodmindMealTargets) {
+      document.querySelector('#screen-mealplan [data-nutrient="calories"]').textContent = '0 / ' + window.foodmindMealTargets.calories + ' kcal';
+      document.querySelector('#screen-mealplan [data-nutrient="protein"]').textContent = '0 / ' + window.foodmindMealTargets.protein + 'g';
+      document.querySelector('#screen-mealplan [data-nutrient="carbs"]').textContent = '0 / ' + window.foodmindMealTargets.carbs + 'g';
+    }
+  }
+
+  function swapMealPlanItem(mealId) {
+    if (!window.foodmindMealAlternatives) return;
+    var alts = window.foodmindMealAlternatives[mealId] || [];
+    if (!alts.length) return;
+    var pick = alts[Math.floor(Math.random() * alts.length)];
+    mealPlanMeals[mealId] = pick;
+    var card = document.querySelector('#screen-mealplan .meal-card[data-meal-id="' + mealId + '"]');
+    if (card) {
+      var nameEl = card.querySelector('.meal-name');
+      var calsEl = card.querySelector('.meal-cals');
+      if (nameEl) nameEl.textContent = pick.name;
+      if (calsEl) calsEl.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"></path></svg> ' + pick.calories + ' kcal';
+    }
+    renderMealPlanNutrition();
+  }
 
   function getCurrentScreenId() {
     const visibleScreen = document.querySelector('.screen-wrapper[style*="display: flex"]');
@@ -2445,6 +2490,7 @@ html_code = """
 
   readPrefsFromHash();
   setTimeout(function() {
+    populateMealPlanScreen();
     syncBackendDataToCards();
     applyPrefsToUI();
   }, 4600);
