@@ -1,5 +1,13 @@
 import streamlit as st
 import streamlit.components.v1 as components
+import sys as _sys, os as _os, json as _json
+import pandas as _pd
+from pathlib import Path as _Path
+
+# --- Thiết lập đường dẫn backend ---
+_sys.path.insert(0, str(_Path(__file__).resolve().parent.parent / 'mybackhurt'))
+_os.chdir(str(_Path(__file__).resolve().parent.parent / 'mybackhurt'))
+from fuzzylogic import load_data, get_recommendations, generate_daily_plan
 
 # Cấu hình trang Streamlit
 st.set_page_config(
@@ -82,7 +90,7 @@ html_code = """
   .progress-label { font-size: 14px; color: #888; font-weight: 500; }
   .progress-value { font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 700; color: #1a1a1a; }
   #screen-loading .progress-track { width: 100%; height: 8px; background: #f0f0f0; border-radius: 99px; overflow: hidden; }
-  #screen-loading .progress-fill { height: 100%; border-radius: 99px; width: 0%; transition: width 1s ease 2.4s; }
+  #screen-loading .progress-fill { height: 100%; border-radius: 99px; width: 0%; transition: width 0.6s ease; }
   #screen-loading .fill-orange { background: #FF5A1F; } #screen-loading .fill-yellow { background: #F59E0B; }
 
   /* ================= CSS MÀN HÌNH 2 (RESULT) ================= */
@@ -438,11 +446,11 @@ html_code = """
       </div>
       <div class="progress-row">
         <div class="progress-meta"><span class="progress-label" id="hunger-progress-label">Độ đói (50%)</span><span class="progress-value" id="hunger-progress-value">Cao</span></div>
-        <div class="progress-track"><div class="progress-fill fill-orange bar-hunger"></div></div>
+        <div class="progress-track"><div class="progress-fill fill-orange bar-hunger" style="width:0%"></div></div>
       </div>
       <div class="progress-row">
         <div class="progress-meta"><span class="progress-label" id="budget-progress-label">Budget (30k – 50k)</span><span class="progress-value" id="budget-progress-value">Hợp lý</span></div>
-        <div class="progress-track"><div class="progress-fill fill-yellow bar-budget"></div></div>
+        <div class="progress-track"><div class="progress-fill fill-yellow bar-budget" style="width:0%"></div></div>
       </div>
     </div>
   </div>
@@ -591,102 +599,7 @@ html_code = """
       </div>
     </div>
 
-    <div class="menu-list">
-      <div class="menu-item">
-        <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=150&q=80" alt="Salad ức gà áp chảo" class="menu-img">
-        <div class="menu-info">
-          <div class="menu-name">Salad ức gà áp chảo</div>
-          <div class="menu-desc">Ức gà mềm, rau xanh, sốt mè rang nhẹ</div>
-          <div class="menu-meta">
-            <span class="menu-cal">🔥 430 kcal</span>
-            <span style="color:#ccc">•</span>
-            <span class="menu-price">55,000 đ</span>
-          </div>
-        </div>
-        <button class="add-btn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-        </button>
-      </div>
-
-      <div class="menu-item">
-        <img src="https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=150&q=80" alt="Cơm gạo lứt bò áp chảo" class="menu-img">
-        <div class="menu-info">
-          <div class="menu-name">Cơm gạo lứt bò áp chảo</div>
-          <div class="menu-desc">Bò áp chảo, rau củ, cơm gạo lứt</div>
-          <div class="menu-meta">
-            <span class="menu-cal">🔥 610 kcal</span>
-            <span style="color:#ccc">•</span>
-            <span class="menu-price">62,000 đ</span>
-          </div>
-        </div>
-        <button class="add-btn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-        </button>
-      </div>
-
-      <div class="menu-item">
-        <img src="https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?auto=format&fit=crop&w=150&q=80" alt="Bún bò tô nhỏ" class="menu-img">
-        <div class="menu-info">
-          <div class="menu-name">Bún bò tô nhỏ</div>
-          <div class="menu-desc">Nước dùng đậm vị, phần vừa đủ no</div>
-          <div class="menu-meta">
-            <span class="menu-cal">🔥 520 kcal</span>
-            <span style="color:#ccc">•</span>
-            <span class="menu-price">48,000 đ</span>
-          </div>
-        </div>
-        <button class="add-btn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-        </button>
-      </div>
-
-      <div class="menu-item">
-        <img src="https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=150&q=80" alt="Greek yogurt granola" class="menu-img">
-        <div class="menu-info">
-          <div class="menu-name">Greek yogurt granola</div>
-          <div class="menu-desc">Yogurt Hy Lạp, granola, trái cây tươi</div>
-          <div class="menu-meta">
-            <span class="menu-cal">🔥 310 kcal</span>
-            <span style="color:#ccc">•</span>
-            <span class="menu-price">42,000 đ</span>
-          </div>
-        </div>
-        <button class="add-btn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-        </button>
-      </div>
-
-      <div class="menu-item">
-        <img src="https://images.unsplash.com/photo-1582450871972-ab5ca641643d?auto=format&fit=crop&w=150&q=80" alt="Gỏi cuốn tôm thịt" class="menu-img">
-        <div class="menu-info">
-          <div class="menu-name">Gỏi cuốn tôm thịt</div>
-          <div class="menu-desc">Tôm, thịt nạc, rau thơm, nước chấm đậu</div>
-          <div class="menu-meta">
-            <span class="menu-cal">🔥 360 kcal</span>
-            <span style="color:#ccc">•</span>
-            <span class="menu-price">38,000 đ</span>
-          </div>
-        </div>
-        <button class="add-btn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-        </button>
-      </div>
-    </div>
+    <div class="menu-list" id="singles-menu-list"></div>
 
   </div> 
 
@@ -879,66 +792,7 @@ html_code = """
     </div>
 
     <!-- Menu List -->
-    <div class="menu-list">
-      <!-- Item 1 -->
-      <div class="menu-item">
-        <img src="https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?auto=format&fit=crop&w=150&q=80" alt="Food" class="menu-img">
-        <div class="menu-info">
-          <div class="menu-name">Cơm tấm sườn bì chả</div>
-          <div class="menu-desc">Sườn nướng than hoa, b...</div>
-          <div class="menu-meta">
-            <span class="menu-cal">🔥 650 kcal</span>
-            <span style="color:#ccc">•</span>
-            <span class="menu-price">45,000 đ</span>
-          </div>
-        </div>
-        <button class="add-btn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-        </button>
-      </div>
-
-      <!-- Item 2 -->
-      <div class="menu-item">
-        <img src="https://images.unsplash.com/photo-1536304929831-ee1ca9d44906?auto=format&fit=crop&w=150&q=80" alt="Food" class="menu-img">
-        <div class="menu-info">
-          <div class="menu-name">Cơm tấm sườn mỡ hành</div>
-          <div class="menu-desc">Sườn mềm mọng nước,...</div>
-          <div class="menu-meta">
-            <span class="menu-cal">🔥 580 kcal</span>
-            <span style="color:#ccc">•</span>
-            <span class="menu-price">40,000 đ</span>
-          </div>
-        </div>
-        <button class="add-btn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-        </button>
-      </div>
-      
-      <!-- Item 3 -->
-      <div class="menu-item">
-<img src="https://images.unsplash.com/photo-1610057099443-fde8c4d50f91?auto=format&fit=crop&w=150&q=80" alt="Cơm tấm đùi gà nướng" class="menu-img">        <div class="menu-info">
-          <div class="menu-name">Cơm tấm đùi gà nướng</div>
-          <div class="menu-desc">Đùi gà góc tư nướng sốt...</div>
-          <div class="menu-meta">
-            <span class="menu-cal">🔥 720 kcal</span>
-            <span style="color:#ccc">•</span>
-            <span class="menu-price">55,000 đ</span>
-          </div>
-        </div>
-        <button class="add-btn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-        </button>
-      </div>
-    </div>
+    <div class="menu-list" id="detail-menu-list"></div>
   </div>
 
   <div class="ai-insight-panel" id="ai-insight-panel">
@@ -1601,7 +1455,8 @@ html_code = """
   }
 
   function openRestaurantDetail(name, returnScreen) {
-    const detail = restaurantDetails[name] || restaurantDetails['Cơm Tấm Bà Lan'];
+    var firstKey = Object.keys(restaurantDetails)[0];
+    const detail = restaurantDetails[name] || (firstKey ? restaurantDetails[firstKey] : {});
     const detailTitle = document.querySelector('#screen-detail .hero-title');
     const detailMatch = document.querySelector('#screen-detail .match-box-val');
     const detailBg = document.querySelector('#screen-detail .hero-bg');
@@ -1615,6 +1470,7 @@ html_code = """
     updateFavoriteButton();
     closeAiInsight();
     resetQuickCart();
+    populateDetailMenu(detail.name);
 
     switchScreen('screen-detail');
   }
@@ -1771,7 +1627,8 @@ html_code = """
   }
 
   function renderAiInsight() {
-    const detail = restaurantDetails[selectedRestaurantName] || restaurantDetails['Cơm Tấm Bà Lan'];
+    var firstKey = Object.keys(restaurantDetails)[0];
+    const detail = restaurantDetails[selectedRestaurantName] || (firstKey ? restaurantDetails[firstKey] : {});
     const subtitle = document.querySelector('#screen-detail .ai-insight-subtitle');
     const reasonList = document.querySelector('#screen-detail .ai-reason-list');
     if (!subtitle || !reasonList) return;
@@ -2108,13 +1965,20 @@ html_code = """
       return;
     }
 
+    const detailAddBtn = event.target.closest('#screen-detail .add-btn');
+    if (detailAddBtn) {
+      event.stopPropagation();
+      addMenuItemToCart(detailAddBtn.closest('.menu-item'));
+      return;
+    }
+
     const singlesOrderBtn = event.target.closest('#screen-result1 .order-now-btn');
     if (singlesOrderBtn && cartItems.length) {
       event.stopPropagation();
       activeCartPanelId = null;
       updateQuickCart();
       activeOrderContext = 'singles';
-      switchScreen('screen-tracking');
+      window.parent.postMessage({type:'foodmind-show-tracking'}, '*');
       setTimeout(() => {
         if(document.getElementById('screen-tracking').style.display === 'flex') {
           switchScreen('screen-success');
@@ -2168,7 +2032,7 @@ html_code = """
       activeCartPanelId = null;
       updateQuickCart();
       activeOrderContext = newOrderBtn.closest('#screen-result1') ? 'singles' : 'detail';
-      switchScreen('screen-tracking');
+      window.parent.postMessage({type:'foodmind-show-tracking'}, '*');
       // Sau 5s tự nhảy sang báo thành công
       setTimeout(() => {
         if(document.getElementById('screen-tracking').style.display === 'flex') {
@@ -2233,7 +2097,7 @@ html_code = """
       if (!selectedMealId) return;
       pendingMealId = selectedMealId;
       activeOrderContext = 'mealplan';
-      switchScreen('screen-tracking');
+      window.parent.postMessage({type:'foodmind-show-tracking'}, '*');
       setTimeout(() => {
         if(document.getElementById('screen-tracking').style.display === 'flex' && activeOrderContext === 'mealplan') {
           completeCurrentOrder();
@@ -2325,10 +2189,8 @@ html_code = """
 
     var hl = document.getElementById('hunger-progress-label');
     var hv = document.getElementById('hunger-progress-value');
-    var hb = document.querySelector('.bar-hunger');
     if (hl) hl.textContent = 'Độ đói (' + hungerPct + '%)';
     if (hv) hv.textContent = hungerLabel;
-    if (hb) hb.style.width = hungerPct + '%';
 
     var budgetLabel = budgetLabels[p.budget] || p.budget;
     var budgetPcts = { 'under_30k': 18, '30_50k': 40, '50_100k': 70, 'over_100k': 95 };
@@ -2337,10 +2199,8 @@ html_code = """
 
     var bl = document.getElementById('budget-progress-label');
     var bv = document.getElementById('budget-progress-value');
-    var bb = document.querySelector('.bar-budget');
     if (bl) bl.textContent = 'Budget (' + budgetLabel + ')';
     if (bv) bv.textContent = budgetValText;
-    if (bb) bb.style.width = budgetPct + '%';
   }
 
   function readPrefsFromHash() {
@@ -2383,8 +2243,27 @@ html_code = """
     var mealType = r.meal_type || 'Full meal';
     var gradient = mealTypeGradients[mealType] || 'linear-gradient(135deg,#1a3a4a,#0f2a38)';
     var matchPct = r.match_score.toFixed(0);
+
+    // Look up real restaurant data for rating & location
     var rating = '4.0';
     var distance = '~1.5 km';
+    if (window.foodmindRestaurants && window.foodmindRestaurants.length) {
+      var matchedRest = window.foodmindRestaurants.find(function(rst) {
+        return rst.restaurant_id === r.restaurant_id || rst.name === r.restaurant_name;
+      });
+      if (matchedRest) {
+        rating = (matchedRest.rating || 4.0).toFixed(1);
+        if (matchedRest.lat && matchedRest.lng) {
+          var userLat = window.userPrefs && window.userPrefs._lat ? window.userPrefs._lat : 10.7614;
+          var userLng = window.userPrefs && window.userPrefs._lng ? window.userPrefs._lng : 106.6686;
+          var dlat = matchedRest.lat - userLat;
+          var dlng = matchedRest.lng - userLng;
+          var distKm = Math.sqrt(dlat*dlat + dlng*dlng) * 111;
+          distance = distKm < 1 ? (distKm * 1000).toFixed(0) + ' m' : distKm.toFixed(1) + ' km';
+        }
+      }
+    }
+
     return {
       name: r.restaurant_name,
       title: r.restaurant_name,
@@ -2488,10 +2367,100 @@ html_code = """
     });
   }
 
+  function populateSinglesMenu() {
+    var container = document.getElementById('singles-menu-list');
+    if (!container) return;
+    if (!window.foodmindBackendResults || !window.foodmindBackendResults.length) return;
+
+    container.innerHTML = '';
+    window.foodmindBackendResults.forEach(function(r, idx) {
+      var priceFormatted = Number(r.price).toLocaleString('vi-VN') + ' đ';
+      var imgSrc = r.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=150&q=80';
+      var desc = (r.meal_type || 'Món ngon') + ' • ' + (r.calories || 0) + ' kcal';
+
+      var itemHTML = '<div class="menu-item" data-dish-id="' + r.dish_id + '">' +
+        '<img src="' + imgSrc + '" alt="' + r.dish_name.replace(/"/g, '&quot;') + '" class="menu-img" onerror="this.src=\\'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=150&q=80\\'">' +
+        '<div class="menu-info">' +
+          '<div class="menu-name">' + r.dish_name + '</div>' +
+          '<div class="menu-desc">' + desc + '</div>' +
+          '<div class="menu-meta">' +
+            '<span class="menu-cal">🔥 ' + (r.calories || 0) + ' kcal</span>' +
+            '<span style="color:#ccc">•</span>' +
+            '<span class="menu-price">' + priceFormatted + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<button class="add-btn">' +
+          '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">' +
+            '<line x1="12" y1="5" x2="12" y2="19"></line>' +
+            '<line x1="5" y1="12" x2="19" y2="12"></line>' +
+          '</svg>' +
+        '</button>' +
+      '</div>';
+      container.insertAdjacentHTML('beforeend', itemHTML);
+    });
+  }
+
+  function populateDetailMenu(restaurantName) {
+    var container = document.getElementById('detail-menu-list');
+    if (!container) return;
+    if (!window.foodmindBackendResults || !window.foodmindBackendResults.length) return;
+
+    var restaurantDishes = window.foodmindBackendResults.filter(function(r) {
+      return r.restaurant_name === restaurantName;
+    });
+
+    container.innerHTML = '';
+    if (restaurantDishes.length === 0) {
+      container.innerHTML = '<div style="padding:24px;text-align:center;color:#999;">Chưa có món nào từ quán này</div>';
+      return;
+    }
+
+    restaurantDishes.forEach(function(r) {
+      var priceFormatted = Number(r.price).toLocaleString('vi-VN') + ' đ';
+      var imgSrc = r.image_url || 'https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?auto=format&fit=crop&w=150&q=80';
+      var matchPct = r.match_score ? r.match_score.toFixed(0) + '% match' : '';
+      var desc = (r.meal_type || 'Món ngon') + (matchPct ? ' • ' + matchPct : '');
+
+      var itemHTML = '<div class="menu-item" data-dish-id="' + r.dish_id + '">' +
+        '<img src="' + imgSrc + '" alt="' + r.dish_name.replace(/"/g, '&quot;') + '" class="menu-img" onerror="this.src=\\'https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?auto=format&fit=crop&w=150&q=80\\'">' +
+        '<div class="menu-info">' +
+          '<div class="menu-name">' + r.dish_name + '</div>' +
+          '<div class="menu-desc">' + desc + '</div>' +
+          '<div class="menu-meta">' +
+            '<span class="menu-cal">🔥 ' + (r.calories || 0) + ' kcal</span>' +
+            '<span style="color:#ccc">•</span>' +
+            '<span class="menu-price">' + priceFormatted + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<button class="add-btn">' +
+          '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">' +
+            '<line x1="12" y1="5" x2="12" y2="19"></line>' +
+            '<line x1="5" y1="12" x2="19" y2="12"></line>' +
+          '</svg>' +
+        '</button>' +
+      '</div>';
+      container.insertAdjacentHTML('beforeend', itemHTML);
+    });
+  }
+
   readPrefsFromHash();
+
+  // Animate progress bars sau khi engine-card bắt đầu hiện (fadeUp start 2.1s)
+  setTimeout(function() {
+    var hb = document.querySelector('.bar-hunger');
+    var bb = document.querySelector('.bar-budget');
+    if (!hb || !bb) return;
+    var p = window.userPrefs;
+    var hungerPct = Math.round((parseFloat(p.hunger) / 10) * 100);
+    var budgetPct = ({'under_30k':18,'30_50k':40,'50_100k':70,'over_100k':95}[p.budget] || 50);
+    hb.style.width = hungerPct + '%';
+    bb.style.width = budgetPct + '%';
+  }, 2400);
+
   setTimeout(function() {
     populateMealPlanScreen();
     syncBackendDataToCards();
+    populateSinglesMenu();
     applyPrefsToUI();
   }, 4600);
 
@@ -2499,6 +2468,133 @@ html_code = """
 </body>
 </html>
 """
+
+# ============================================================
+# BACKEND: Tải dữ liệu thật & inject vào HTML
+# ============================================================
+try:
+    _config, _dishes_df, _restaurants_df = load_data()
+
+    # User preferences mặc định cho lần đầu load
+    _default_inputs = {
+        'lat': 10.7614, 'lng': 106.6686,
+        'budget': '30_50k', 'time': 'fast',
+        'hunger': 6.5, 'health_goal': 'Normal',
+        'weather': 'Normal', 'cuisine': 'Việt Nam'
+    }
+    _all_recs = get_recommendations(_default_inputs, _config, _dishes_df, _restaurants_df)
+
+    # --- window.foodmindBackendResults (top 15 recommendations) ---
+    _backend_results_json = []
+    for _br in _all_recs[:15]:
+        _bd = _dishes_df[_dishes_df['dish_id'] == _br['dish_id']]
+        if len(_bd) == 0:
+            continue
+        _bd = _bd.iloc[0]
+        _backend_results_json.append({
+            'dish_id': str(_br['dish_id']),
+            'dish_name': str(_br['dish_name']),
+            'restaurant_id': str(_br['restaurant_id']),
+            'restaurant_name': str(_br['restaurant_name']),
+            'price': int(_br['price']) if _pd.notna(_br.get('price')) else 0,
+            'calories': int(float(_bd['calories'])) if _pd.notna(_bd.get('calories')) else 0,
+            'protein_g': int(float(_bd['protein_g'])) if _pd.notna(_bd.get('protein_g')) else 0,
+            'carb_g': int(float(_bd['carb_g'])) if _pd.notna(_bd.get('carb_g')) else 0,
+            'fat_g': int(float(_bd['fat_g'])) if _pd.notna(_bd.get('fat_g')) else 0,
+            'image_url': str(_bd.get('image_url', '')),
+            'match_score': _br['match_score'],
+            'meal_type': str(_br.get('meal_type', ''))
+        })
+
+    # --- window.foodmindRestaurants (danh sách quán ăn) ---
+    _restaurants_json = []
+    for _, row in _restaurants_df.iterrows():
+        _restaurants_json.append({
+            'restaurant_id': str(row['restaurant_id']),
+            'name': str(row['name']),
+            'lat': float(row['lat']) if _pd.notna(row.get('lat')) else None,
+            'lng': float(row['lng']) if _pd.notna(row.get('lng')) else None,
+            'avg_prep_time': float(row.get('avg_prep_time', 15)) if _pd.notna(row.get('avg_prep_time', 15)) else 15,
+            'is_open': str(row.get('is_open', 'True')).lower() != 'false',
+            'open_hours': str(row.get('open_hours', '00:00-23:59')),
+            'cuisine_type': str(row.get('cuisine_type', '')),
+            'cover_image_url': str(row.get('cover_image_url', '')),
+            'rating': float(row.get('rating', 4.0)),
+            'address': str(row.get('address', ''))
+        })
+
+    # --- window.foodmindMealPlan (kế hoạch bữa ăn) ---
+    _meal_plan = generate_daily_plan(_default_inputs, _config, _dishes_df, _restaurants_df)
+    _meal_plan_json = {}
+    _used_dish_ids = []
+    for _meal_key, _meal_val in _meal_plan.items():
+        _dinfo = _dishes_df[_dishes_df['dish_id'] == _meal_val['dish_id']]
+        if len(_dinfo) == 0:
+            continue
+        _dinfo = _dinfo.iloc[0]
+        _used_dish_ids.append(str(_meal_val['dish_id']))
+        _mprice = int(_meal_val['price']) if _pd.notna(_meal_val.get('price')) else 0
+        _mcal = int(float(_dinfo['calories'])) if _pd.notna(_dinfo.get('calories')) else 0
+        _mprotein = int(float(_dinfo['protein_g'])) if _pd.notna(_dinfo.get('protein_g')) else 0
+        _mcarbs = int(float(_dinfo['carb_g'])) if _pd.notna(_dinfo.get('carb_g')) else 0
+        _mfat = int(float(_dinfo['fat_g'])) if _pd.notna(_dinfo.get('fat_g')) else 0
+        _meal_plan_json[_meal_key] = {
+            'dish_id': str(_meal_val['dish_id']),
+            'name': str(_meal_val['dish_name']),
+            'restaurant_name': str(_meal_val['restaurant_name']),
+            'restaurant_id': str(_meal_val['restaurant_id']),
+            'price': _mprice,
+            'calories': _mcal,
+            'protein': _mprotein,
+            'carbs': _mcarbs,
+            'fat': _mfat,
+            'image_url': str(_dinfo.get('image_url', '')),
+            'match_score': _meal_val['match_score'],
+            'meal_type': str(_meal_val.get('meal_type', ''))
+        }
+
+    # --- Sinh danh sách thay thế cho mỗi bữa ---
+    _meal_alternatives = {'breakfast': [], 'lunch': [], 'dinner': []}
+    for _r in _all_recs:
+        if len(_meal_alternatives['breakfast']) >= 3 and len(_meal_alternatives['lunch']) >= 3 and len(_meal_alternatives['dinner']) >= 3:
+            break
+        _did = str(_r['dish_id'])
+        if _did in _used_dish_ids:
+            continue
+        _mt = _r.get('meal_type', '')
+        _slot = 'breakfast' if _mt == 'Snack' else ('lunch' if _mt == 'Full meal' else 'dinner')
+        if len(_meal_alternatives[_slot]) < 3:
+            _dinfo2 = _dishes_df[_dishes_df['dish_id'] == _r['dish_id']]
+            if len(_dinfo2) == 0:
+                continue
+            _dinfo2 = _dinfo2.iloc[0]
+            _meal_alternatives[_slot].append({
+                'dish_id': _did,
+                'name': str(_r['dish_name']),
+                'restaurant_name': str(_r['restaurant_name']),
+                'price': int(_r['price']) if _pd.notna(_r.get('price')) else 0,
+                'calories': int(float(_dinfo2['calories'])) if _pd.notna(_dinfo2.get('calories')) else 0,
+                'protein': int(float(_dinfo2['protein_g'])) if _pd.notna(_dinfo2.get('protein_g')) else 0,
+                'carbs': int(float(_dinfo2['carb_g'])) if _pd.notna(_dinfo2.get('carb_g')) else 0,
+                'fat': int(float(_dinfo2['fat_g'])) if _pd.notna(_dinfo2.get('fat_g')) else 0,
+                'match_score': _r['match_score']
+            })
+
+    # --- Inject dữ liệu vào HTML ---
+    _inject_script = (
+        '<script>'
+        'window.foodmindBackendResults = ' + _json.dumps(_backend_results_json, ensure_ascii=False) + ';'
+        'window.foodmindRestaurants = ' + _json.dumps(_restaurants_json, ensure_ascii=False) + ';'
+        'window.foodmindMealPlan = ' + _json.dumps(_meal_plan_json, ensure_ascii=False) + ';'
+        'window.foodmindMealAlternatives = ' + _json.dumps(_meal_alternatives, ensure_ascii=False) + ';'
+        'window.foodmindMealTargets = {calories:1800,protein:120,carbs:250,fat:65};'
+        '</script>'
+    )
+    html_code = html_code.replace('</body>', _inject_script + '\n</body>')
+
+    # Progress bar widths are handled by JS + CSS transition (delayed animation in script)
+except Exception as _e:
+    html_code = html_code.replace('</body>', f'<script>window.foodmindBackendError = "{str(_e)}";</script>\n</body>')
 
 # Render ra giao diện Streamlit
 components.html(html_code, height=950, scrolling=False)

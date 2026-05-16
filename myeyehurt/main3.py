@@ -297,6 +297,61 @@ body_app7 = body_app7.replace(
     '''onclick="selectApp7Pill(this)"'''
 )
 
+# --- Gọi API thời tiết thật & chèn ô thông tin vào App7 ---
+import requests
+try:
+    _W_API_KEY = "ac08301614e960cf24bf27409d6a2b9f"
+    _W_URL = f"http://api.openweathermap.org/data/2.5/weather?lat=10.7614&lon=106.6686&appid={_W_API_KEY}&units=metric"
+    _W_RES = requests.get(_W_URL, timeout=5).json()
+    _W_TEMP = int(_W_RES['main']['temp'])
+    _W_COND = _W_RES['weather'][0]['description']
+    _W_HUM = _W_RES['main']['humidity']
+    _W_COND_VI = {'clear sky': 'Trời quang', 'few clouds': 'Ít mây', 'scattered clouds': 'Mây rải rác', 'broken clouds': 'Nhiều mây', 'overcast clouds': 'U ám', 'light rain': 'Mưa nhỏ', 'moderate rain': 'Mưa vừa', 'heavy rain': 'Mưa to', 'thunderstorm': 'Giông bão', 'drizzle': 'Mưa phùn', 'haze': 'Sương mù'}.get(_W_COND, _W_COND)
+    _W_HTML = f'<div class="weather-info-box"><span class="weather-temp">{_W_TEMP}°C</span><span class="weather-desc">{_W_COND_VI}</span><span class="weather-hum">💧 {_W_HUM}%</span></div>'
+except:
+    _W_HTML = '<div class="weather-info-box"><span class="weather-temp">--°C</span><span class="weather-desc">Không có dữ liệu</span></div>'
+
+body_app7 = body_app7.replace(
+    '<span class="realtime-tag">Real-time</span>',
+    ''
+)
+
+# Chèn ô thông tin thời tiết sau section-label
+body_app7 = body_app7.replace(
+    '</div>\n\n  <div class="weather-grid">',
+    '</div>\n' + _W_HTML + '\n\n  <div class="weather-grid">'
+)
+
+# --- CSS cho ô thông tin thời tiết ---
+_WEATHER_CSS = '''
+#screen-app7 .weather-info-box {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #f8f6f2;
+  border-radius: 16px;
+  padding: 14px 18px;
+  margin-bottom: 8px;
+}
+#screen-app7 .weather-temp {
+  font-family: 'Sora', sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  color: #FF5A1F;
+}
+#screen-app7 .weather-desc {
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+}
+#screen-app7 .weather-hum {
+  font-size: 13px;
+  font-weight: 600;
+  color: #888;
+  margin-left: auto;
+}
+'''
+
 # ============================================================
 # CSS VÀ JS CHO ANIMATION CHUYỂN TRANG
 # ============================================================
@@ -1016,6 +1071,7 @@ style_budget   = scope_css(style_budget,   'screen-budget')
 style_hunger   = scope_css(style_hunger,   'screen-hunger')
 style_diet     = scope_css(style_diet,     'screen-diet')
 style_app7     = scope_css(style_app7,     'screen-app7')
+style_app7    += _WEATHER_CSS
 html_results   = remove_home_top_action_icons(html_results)
 html_results   = sync_result_tab_indicator(html_results)
 html_results   = add_needs_panel_toggle(html_results)

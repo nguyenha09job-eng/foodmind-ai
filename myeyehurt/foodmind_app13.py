@@ -1,5 +1,13 @@
 import streamlit as st
 import streamlit.components.v1 as components
+import sys, json
+from pathlib import Path
+
+# --- Import backend & Folium ---
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'mybackhurt'))
+from fuzzylogic import get_nearby_restaurants_for_map
+from geopy.distance import geodesic
+import folium
 
 st.set_page_config(
     page_title="FoodMind AI - Tracking",
@@ -13,9 +21,35 @@ st.markdown("""
         .block-container { padding: 0 !important; }
         header { visibility: hidden; }
         footer { visibility: hidden; }
-        [data-testid="stAppViewContainer"] { background: #333; } /* Nền tối để tôn lên điện thoại */
+        [data-testid="stAppViewContainer"] { background: #333; }
     </style>
 """, unsafe_allow_html=True)
+
+# --- Tải dữ liệu thật ---
+USER_LAT, USER_LNG = 10.7614, 106.6686
+restaurants_data = get_nearby_restaurants_for_map(USER_LAT, USER_LNG)
+target = restaurants_data[0] if restaurants_data else {
+    'name': 'Quán ăn', 'lat': 10.765, 'lng': 106.672,
+    'distance_str': '~1 km', 'rating': 4.5, 'avg_prep_time': 15
+}
+TARGET_LAT, TARGET_LNG = target['lat'], target['lng']
+SHIPPER_LAT = USER_LAT + (TARGET_LAT - USER_LAT) * 0.55
+SHIPPER_LNG = USER_LNG + (TARGET_LNG - USER_LNG) * 0.55
+dist_km = geodesic((USER_LAT, USER_LNG), (TARGET_LAT, TARGET_LNG)).kilometers
+ETA_MIN = int(dist_km * 4 + target.get('avg_prep_time', 15) + 5)
+REST_NAME = target['name']
+
+# --- Tạo Folium map tracking ---
+m = folium.Map(location=[SHIPPER_LAT, SHIPPER_LNG], zoom_start=15, control_scale=True, tiles='OpenStreetMap')
+folium.Marker(location=[USER_LAT, USER_LNG], popup=folium.Popup("📍 Vị trí của bạn", max_width=200), icon=folium.Icon(color="blue", icon="home", prefix="fa")).add_to(m)
+folium.Marker(location=[TARGET_LAT, TARGET_LNG], popup=folium.Popup(f"🏪 {REST_NAME}", max_width=200), icon=folium.Icon(color="red", icon="cutlery", prefix="fa")).add_to(m)
+folium.Marker(location=[SHIPPER_LAT, SHIPPER_LNG], popup=folium.Popup("🛵 Shipper đang trên đường", max_width=200), icon=folium.Icon(color="orange", icon="motorcycle", prefix="fa")).add_to(m)
+folium.PolyLine(locations=[[TARGET_LAT, TARGET_LNG], [SHIPPER_LAT, SHIPPER_LNG], [USER_LAT, USER_LNG]], color="#FF5A1F", weight=5, opacity=0.8).add_to(m)
+m.fit_bounds([[min(USER_LAT, TARGET_LAT), min(USER_LNG, TARGET_LNG)], [max(USER_LAT, TARGET_LAT), max(USER_LNG, TARGET_LNG)]], padding=[40, 40])
+
+FOLIUM_HTML = m.get_root().render()
+FOLIUM_HTML = FOLIUM_HTML.replace('</head>', '<meta name="viewport" content="width=device-width, initial-scale=1.0"><style>html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;}.folium-map{width:100%!important;height:100%!important;position:absolute;top:0;left:0;}</style></head>')
+FOLIUM_JS_SAFE = FOLIUM_HTML.replace('\\', '\\\\').replace('`', '\\`').replace('$', '\\$').replace('</', '<\\/')
 
 html_code = """
 <!DOCTYPE html>
@@ -38,25 +72,33 @@ body {
   padding: 24px 0 40px;
 }
 
-/* Khung điện thoại chuẩn iPhone */
 .phone-frame {
   width: 390px;
   min-height: 844px;
   max-height: 844px;
-  /* Giả lập nền bản đồ (Map Grid) */
   background-color: #e5e2d8;
-  background-image: 
-    linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
-  background-size: 80px 80px;
-  background-position: center;
   border-radius: 48px;
   box-shadow: 0 40px 80px rgba(0,0,0,0.25), 0 0 0 10px #1a1a1a;
   position: relative;
   overflow: hidden;
 }
 
-/* Tai thỏ (Notch) */
+.map-iframe-wrapper {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 48px;
+  overflow: hidden;
+  z-index: 1;
+}
+.map-iframe-wrapper iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
 .notch {
   position: absolute;
   top: 14px; left: 50%; transform: translateX(-50%);
@@ -66,9 +108,6 @@ body {
   z-index: 100;
 }
 
-/* =========================================
-   TOP CARD (Thời gian dự kiến)
-   ========================================= */
 .top-card {
   position: absolute;
   top: 60px; left: 16px; right: 16px;
@@ -89,10 +128,7 @@ body {
   color: #1a1a1a;
 }
 
-.eta-info {
-  text-align: center;
-  flex: 1;
-}
+.eta-info { text-align: center; flex: 1; }
 
 .eta-label {
   font-size: 10px;
@@ -118,9 +154,6 @@ body {
   display: flex; align-items: center; justify-content: center;
 }
 
-/* =========================================
-   BẢN ĐỒ & LỘ TRÌNH (SVG Path)
-   ========================================= */
 .route-svg {
   position: absolute;
   top: 0; left: 0;
@@ -128,10 +161,9 @@ body {
   z-index: 1;
 }
 
-/* Marker Quán ăn */
 .marker-restaurant {
   position: absolute;
-  top: 240px; left: 160px; 
+  top: 240px; left: 160px;
   transform: translate(-50%, -50%);
   display: flex; flex-direction: column; align-items: center; gap: 6px;
   z-index: 10;
@@ -158,10 +190,9 @@ body {
   box-shadow: 0 4px 10px rgba(0,0,0,0.08);
 }
 
-/* Marker Shipper */
 .marker-shipper {
   position: absolute;
-  top: 420px; left: 160px; /* Nằm trên đường cam */
+  top: 420px; left: 160px;
   transform: translate(-50%, -50%);
   width: 52px; height: 52px;
   background: #FF5A1F;
@@ -174,7 +205,6 @@ body {
   animation: bounce 1s infinite alternate;
 }
 
-/* Vòng tròn Radar nhấp nháy bao quanh Shipper */
 .radar-pulse {
   position: absolute;
   top: 420px; left: 160px;
@@ -197,9 +227,6 @@ body {
   100% { transform: translate(-50%, -54%); }
 }
 
-/* =========================================
-   BOTTOM SHEET (Thông tin tài xế)
-   ========================================= */
 .bottom-sheet {
   position: absolute;
   bottom: 0; left: 0; right: 0;
@@ -217,7 +244,6 @@ body {
   margin: 0 auto 24px;
 }
 
-/* Driver Card */
 .driver-card {
   display: flex;
   align-items: center;
@@ -238,10 +264,7 @@ body {
   color: #1a1a1a;
 }
 
-.driver-info {
-  flex: 1;
-  margin-left: 14px;
-}
+.driver-info { flex: 1; margin-left: 14px; }
 
 .driver-name {
   font-family: 'Sora', sans-serif;
@@ -262,10 +285,7 @@ body {
 
 .star-rating { color: #FFC107; font-weight: 700; display:flex; align-items:center; gap:3px;}
 
-.driver-actions {
-  display: flex;
-  gap: 10px;
-}
+.driver-actions { display: flex; gap: 10px; }
 
 .action-btn {
   width: 48px; height: 48px;
@@ -274,11 +294,7 @@ body {
   cursor: pointer;
 }
 
-.btn-chat {
-  background: #fff;
-  border: 1.5px solid #e8e6e0;
-  color: #1a1a1a;
-}
+.btn-chat { background: #fff; border: 1.5px solid #e8e6e0; color: #1a1a1a; }
 
 .btn-call {
   background: #FF5A1F;
@@ -286,7 +302,6 @@ body {
   box-shadow: 0 4px 12px rgba(255, 90, 31, 0.3);
 }
 
-/* Timeline 5 Bước */
 .timeline-wrap {
   position: relative;
   display: flex;
@@ -295,7 +310,6 @@ body {
   padding: 0 4px;
 }
 
-/* Đường line xám nền */
 .timeline-wrap::before {
   content: '';
   position: absolute;
@@ -305,12 +319,11 @@ body {
   z-index: 1;
 }
 
-/* Đường line xanh chạy (đến bước 4) */
 .timeline-wrap::after {
   content: '';
   position: absolute;
   top: 15px; left: 20px;
-  width: 75%; /* Chiếm đến icon thứ 4 */
+  width: 75%;
   height: 2px;
   background: #00C853;
   z-index: 1;
@@ -334,17 +347,10 @@ body {
   color: #fff;
 }
 
-/* Hiệu ứng viền nhạt cho icon đang active */
-.step-icon.current {
-  box-shadow: 0 0 0 6px #E8F5E9;
-}
+.step-icon.current { box-shadow: 0 0 0 6px #E8F5E9; }
 
-.step-icon.inactive {
-  background: #f0f0f0;
-}
-.step-icon.inactive .dot {
-  width: 8px; height: 8px; background: #ccc; border-radius: 50%;
-}
+.step-icon.inactive { background: #f0f0f0; }
+.step-icon.inactive .dot { width: 8px; height: 8px; background: #ccc; border-radius: 50%; }
 
 .step-label {
   font-size: 10px;
@@ -363,23 +369,17 @@ body {
   font-size: 16px;
   color: #FF5A1F;
 }
-
 </style>
 </head>
 <body>
 
 <div class="phone-frame">
-  <!-- Notch iPhone -->
   <div class="notch"></div>
 
-  <!-- SVG vẽ đường đi (Line cam) -->
-  <svg class="route-svg" viewBox="0 0 390 844" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <polyline points="160,250 160,490 320,490 320,600" stroke="#FF5A1F" stroke-width="5" stroke-linejoin="round"/>
-  </svg>
+  <div class="map-iframe-wrapper" id="map-wrapper"></div>
 
-  <!-- Card Dự kiến giao -->
   <div class="top-card">
-    <div class="back-btn">
+    <div class="back-btn" onclick="window.parent.postMessage({type:'foodmind-back-from-tracking'},'*')">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <line x1="19" y1="12" x2="5" y2="12"></line>
         <polyline points="12 19 5 12 12 5"></polyline>
@@ -387,7 +387,7 @@ body {
     </div>
     <div class="eta-info">
       <div class="eta-label">DỰ KIẾN GIAO</div>
-      <div class="eta-time">12 phút nữa</div>
+      <div class="eta-time">__ETA_MIN__ phút nữa</div>
     </div>
     <div class="time-icon">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -397,21 +397,17 @@ body {
     </div>
   </div>
 
-  <!-- Quán Ăn (Bà Lan) -->
   <div class="marker-restaurant">
     <div class="res-icon">🍱</div>
-    <div class="res-label">Bà Lan</div>
+    <div class="res-label">__REST_NAME__</div>
   </div>
 
-  <!-- Radar Pulse & Shipper (Xe Máy) -->
   <div class="radar-pulse"></div>
   <div class="marker-shipper">🛵</div>
 
-  <!-- Bottom Sheet (Trạng thái đơn) -->
   <div class="bottom-sheet">
     <div class="drag-handle"></div>
 
-    <!-- Thông tin tài xế -->
     <div class="driver-card">
       <div class="driver-avatar">MT</div>
       <div class="driver-info">
@@ -420,7 +416,7 @@ body {
           <span class="star-rating">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
             4.9
-          </span> 
+          </span>
           <span>• Honda Wave</span>
         </div>
       </div>
@@ -434,53 +430,37 @@ body {
       </div>
     </div>
 
-    <!-- Timeline các bước -->
     <div class="timeline-wrap">
-      <!-- Bước 1 -->
-      <div class="step">
-        <div class="step-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-        </div>
-        <div class="step-label">Đã xác<br>nhận</div>
-      </div>
-      <!-- Bước 2 -->
-      <div class="step">
-        <div class="step-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-        </div>
-        <div class="step-label">Đang<br>chuẩn bị</div>
-      </div>
-      <!-- Bước 3 -->
-      <div class="step">
-        <div class="step-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-        </div>
-        <div class="step-label">Shipper<br>nhận đơn</div>
-      </div>
-      <!-- Bước 4 (Current) -->
-      <div class="step">
-        <div class="step-icon current">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-        </div>
-        <div class="step-label">Đang giao</div>
-      </div>
-      <!-- Bước 5 (Inactive) -->
-      <div class="step inactive">
-        <div class="step-icon inactive">
-          <div class="dot"></div>
-        </div>
-        <div class="step-label">Đã giao</div>
-      </div>
+      <div class="step"><div class="step-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div class="step-label">Đã xác<br>nhận</div></div>
+      <div class="step"><div class="step-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div class="step-label">Đang<br>chuẩn bị</div></div>
+      <div class="step"><div class="step-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div class="step-label">Shipper<br>nhận đơn</div></div>
+      <div class="step"><div class="step-icon current"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div class="step-label">Đang giao</div></div>
+      <div class="step inactive"><div class="step-icon inactive"><div class="dot"></div></div><div class="step-label">Đã giao</div></div>
     </div>
 
-    <!-- Trạng thái chữ cam -->
     <div class="status-text">Shipper đang trên đường</div>
-
   </div>
 </div>
+
+<script>
+(function() {
+    var mapWrapper = document.getElementById('map-wrapper');
+    if (mapWrapper) {
+        var mapIframe = document.createElement('iframe');
+        mapIframe.srcdoc = `__FOLIUM_HTML__`;
+        mapIframe.setAttribute('allow', 'geolocation');
+        mapWrapper.appendChild(mapIframe);
+    }
+})();
+</script>
 
 </body>
 </html>
 """
+
+# --- Chèn dữ liệu thật vào placeholder ---
+html_code = html_code.replace('__ETA_MIN__', str(ETA_MIN))
+html_code = html_code.replace('__REST_NAME__', REST_NAME)
+html_code = html_code.replace('__FOLIUM_HTML__', FOLIUM_JS_SAFE)
 
 components.html(html_code, height=960, scrolling=False)
