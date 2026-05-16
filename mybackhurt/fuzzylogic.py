@@ -165,6 +165,35 @@ def get_meal_type(food_category):
         'healthy_meal': 'Healthy meal'
     }
     return meal_type_map.get(cat, 'Full meal')
+# ==========================================
+# FUZZY CALORIE LEVEL CLASSIFICATION
+# ==========================================
+def get_fuzzy_calorie_level(calories):
+    """
+    Phân loại mức calories (Low/Medium/High) bằng fuzzy membership.
+    Dùng overlapping membership functions thay vì crisp thresholds.
+    """
+    cal = float(calories)
+
+    low_mf    = trapmf(cal, [0, 0, 250, 450])   # chắc chắn Low < 250, transition 250→450
+    medium_mf = trimf(cal, [300, 500, 750])      # peak ở 500, transition 300→500 và 500→750
+    high_mf   = trapmf(cal, [600, 800, 99999, 99999])  # transition 600→800, chắc chắn High > 800
+
+    levels = [
+        ('Low',    low_mf,    'low'),
+        ('Medium', medium_mf, 'medium'),
+        ('High',   high_mf,   'high'),
+    ]
+
+    best = max(levels, key=lambda x: x[1])
+
+    return {
+        'label':        best[0],
+        'className':    best[2],
+        'membership':   round(best[1], 4),
+    }
+
+
 def calculate_weather_score(food_category, current_weather, config):
     normalized_cat = normalize_category(food_category)
     weather_map = config.get('weather_food_map', {})
@@ -281,6 +310,8 @@ def get_recommendations(user_inputs, config, dishes_df, restaurants_df):
         
         meal_type = get_meal_type(dish['food_category'])
 
+        _cal_level = get_fuzzy_calorie_level(dish['calories'])
+
         results.append({
             'dish_id': dish['dish_id'],
             'dish_name': dish['name'],
@@ -288,7 +319,8 @@ def get_recommendations(user_inputs, config, dishes_df, restaurants_df):
             'restaurant_name': res_info.get('name', 'Unknown'),
             'price': dish['price'],
             'meal_type': meal_type,
-            'match_score': round(final_score * 100, 2)
+            'match_score': round(final_score * 100, 2),
+            'calorie_level': _cal_level,
         })
     results.sort(key=lambda x: x['match_score'], reverse=True)
     return results

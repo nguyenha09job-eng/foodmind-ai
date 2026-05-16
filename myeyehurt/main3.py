@@ -208,6 +208,13 @@ body_splash = body_splash.replace(
     '''<a href="#">Đăng nhập</a>''',
     '''<a href="#" onclick="switchToLogin(); return false;">Đăng nhập</a>'''
 )
+# --- Inject huongdan.png as base64 ---
+import base64 as _b64
+_huongdan_path = _Path(__file__).resolve().parent.parent / 'huongdan.png'
+if _huongdan_path.exists():
+    with open(_huongdan_path, 'rb') as _hf:
+        _huongdan_b64 = 'data:image/png;base64,' + _b64.b64encode(_hf.read()).decode()
+    body_splash = body_splash.replace('__HUONGDAN_BASE64__', _huongdan_b64)
 body_login = body_login.replace(
     '''onclick="alert('Quay lại!')"''',
     '''onclick="switchToSplash()"'''

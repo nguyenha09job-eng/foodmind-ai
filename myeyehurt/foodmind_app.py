@@ -363,7 +363,7 @@ html_code = """
     </div>
   </button>
 
-  <button class="btn-secondary" onclick="alert('Giới thiệu tính năng!')">
+  <button class="btn-secondary" onclick="document.getElementById('guide-modal').style.display='flex'">
     <span class="spark-icon">✦</span>
     <span>Xem giới thiệu tính năng</span>
   </button>
@@ -377,6 +377,18 @@ html_code = """
   </p>
 
   <div class="divider"></div>
+
+  <!-- Guide Modal -->
+  <div id="guide-modal" style="display:none; position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.88); z-index:9999; justify-content:center; align-items:flex-start; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:16px; border-radius:48px;">
+    <div style="position:relative; width:100%;">
+      <div onclick="document.getElementById('guide-modal').style.display='none'" style="position:sticky; top:0; z-index:10000; display:flex; justify-content:flex-end; padding:8px 0;">
+        <div style="width:36px; height:36px; background:rgba(255,255,255,0.2); backdrop-filter:blur(10px); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; border:1px solid rgba(255,255,255,0.25);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </div>
+      </div>
+      <img src="__HUONGDAN_BASE64__" style="width:100%; border-radius:12px;" />
+    </div>
+  </div>
 </div>
 </body>
 </html>
