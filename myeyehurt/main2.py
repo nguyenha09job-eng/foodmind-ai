@@ -1464,6 +1464,15 @@ html_code = """
   }
 
   function openRestaurantDetail(name, returnScreen) {
+    if (!restaurantDetails[name] && window.foodmindAllRecalculated) {
+      var dishForRst = window.foodmindAllRecalculated.find(function(dr) {
+        return dr.restaurant_name === name;
+      });
+      if (dishForRst) {
+        restaurantDetails[name] = backendResultToDetail(dishForRst, 0);
+      }
+    }
+
     var firstKey = Object.keys(restaurantDetails)[0];
     const detail = restaurantDetails[name] || (firstKey ? restaurantDetails[firstKey] : {});
     const detailTitle = document.querySelector('#screen-detail .hero-title');
@@ -2612,6 +2621,7 @@ html_code = """
     });
 
     recalculated.sort(function(a, b) { return b.match_score - a.match_score; });
+    window.foodmindAllRecalculated = recalculated;
     window.foodmindBackendResults = recalculated.slice(0, 15);
     
     var breakfast = recalculated.find(function(r) { return r.meal_type === 'Snack'; }) || recalculated[2] || recalculated[0];
@@ -2624,6 +2634,44 @@ html_code = """
       Dinner: dinner
     };
   }
+
+  function populateTrendingRestaurants() {
+    var container = document.querySelector('.trending-horizontal-scroll');
+    if (!container || !window.foodmindRestaurants || !window.foodmindRestaurants.length) return;
+
+    var sortedRests = window.foodmindRestaurants.slice().sort(function(a, b) {
+      var rA = a.rating || 0;
+      var rB = b.rating || 0;
+      return rB - rA;
+    });
+
+    var top5 = sortedRests.slice(0, 5);
+    container.innerHTML = ''; // clear hardcoded
+
+    top5.forEach(function(r) {
+      var img = r.cover_image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80';
+      var rating = (r.rating || 4.0).toFixed(1);
+      
+      var address = r.address || '';
+      var districtMatch = address.match(/Quận \d+|Q\.\d+|Quận [a-zA-Z\s]+/i);
+      var district = districtMatch ? districtMatch[0] : 'Quận 1';
+
+      var card = document.createElement('div');
+      card.className = 'trend-card';
+      card.setAttribute('data-restaurant', r.name);
+      card.innerHTML = '<div class="trend-img-wrap">' +
+          '<img src="' + img + '" alt="' + r.name.replace(/"/g, '&quot;') + '" class="trend-img">' +
+          '<div class="rating-badge"><span style="color:#FFD600">★</span> ' + rating + '</div>' +
+        '</div>' +
+        '<div class="trend-info">' +
+          '<div class="trend-name">' + r.name + '</div>' +
+          '<div class="trend-loc"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> ' + district + '</div>' +
+        '</div>';
+      container.appendChild(card);
+    });
+  }
+
+  setTimeout(populateTrendingRestaurants, 50);
 
   setTimeout(function() {
     recalculateFuzzyScoresJS();
